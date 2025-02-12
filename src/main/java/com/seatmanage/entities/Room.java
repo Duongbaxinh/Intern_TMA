@@ -1,15 +1,14 @@
 package com.seatmanage.entities;
 
+
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Size;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.OnDelete;
-import org.hibernate.annotations.OnDeleteAction;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Getter
@@ -17,26 +16,23 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@FieldDefaults(level = AccessLevel.PRIVATE)
-public class User {
+@FieldDefaults(level = AccessLevel.PUBLIC)
+public class Room {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    String id;
-    String firstName;
-    String lastName;
-    String username;
+    private String id;
 
-    @Size(min = 5, max = 20)
-    String password;
+    @Column(unique = true, nullable = false)
+    String name;
+
+    String description;
 
     @ManyToOne
-    @JoinColumn(name = "roleId",referencedColumnName = "id",nullable = true)
-    @OnDelete(action = OnDeleteAction.SET_NULL)
-    Role role;
+    @JoinColumn(name = "hall_id")
+    Hall hall;
 
-    @OneToOne
-    @JoinColumn(name = "seatId")
-    Seat seat;
+    @OneToMany(mappedBy = "room")
+    private List<Seat> seatList;
 
     @CreationTimestamp
     @Column(updatable = false)
@@ -44,4 +40,6 @@ public class User {
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;
+
+
 }
