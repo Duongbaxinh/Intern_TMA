@@ -19,7 +19,7 @@ public class UserService {
     private UserMapper userMapper;
 
     public User addUser(UserCreationRequest user) {
-        List<User> userExited = userRepository.findByFirstname(user.getFirstName());
+        List<User> userExited = userRepository.findByEmailAddress(user.getFirstName());
         if(!userExited.isEmpty()){
             throw new AppExceptionHandle(ErrorCode.EXISTED_USER);
         }
