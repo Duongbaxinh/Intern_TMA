@@ -22,13 +22,13 @@ public class Room {
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
-    @Column(unique = true, nullable = false)
+    @Column(nullable = false)
     String name;
 
     String description;
 
     @ManyToOne
-    @JoinColumn(name = "hall_id")
+    @JoinColumn(name = "hallId")
     Hall hall;
 
     @OneToMany(mappedBy = "room")

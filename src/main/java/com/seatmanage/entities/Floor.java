@@ -8,7 +8,9 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Getter
@@ -28,7 +30,7 @@ public class Floor {
     String description;
 
     @OneToMany(mappedBy = "floor")
-    private List<Hall> hallList;
+    private Set<Hall> hallList;
 
     @CreationTimestamp
     @Column(updatable = false)

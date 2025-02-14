@@ -1,4 +1,4 @@
-package com.seatmanage.dto.request;
+package com.seatmanage.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Builder;
