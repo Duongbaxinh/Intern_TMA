@@ -5,7 +5,7 @@ import lombok.*;
 
 @Data
 @NoArgsConstructor
-public class UserCreationRequest {
+public class UserRequest {
     String firstName;
     String lastName;
     @Size(min = 8, message = "UNVALIDATED_PASS")

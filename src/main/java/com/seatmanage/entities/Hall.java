@@ -5,12 +5,16 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
+@NamedQuery(name = "Hall.findByNameHall",
+        query = "select h from Hall h where h.name = ?1")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -22,13 +26,14 @@ public class Hall {
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
-    @Column(unique = true, nullable = false)
+    @Column( nullable = false)
     String name;
 
     String description;
 
     @ManyToOne
-    @JoinColumn(name = "floor_id")
+    @OnDelete(action = OnDeleteAction.SET_NULL)
+    @JoinColumn(name = "floor_id",referencedColumnName = "id",nullable = true)
     Floor floor;
 
     @OneToMany(mappedBy = "hall")

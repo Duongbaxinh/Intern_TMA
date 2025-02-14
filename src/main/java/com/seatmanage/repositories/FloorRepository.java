@@ -11,4 +11,5 @@ import java.util.Optional;
 public interface FloorRepository extends JpaRepository<Floor,String> {
     @Query("select f  from  Floor f where f.name = :floorName ")
     Optional<Floor> getFloorByFloorName(String floorName);
+
 }
