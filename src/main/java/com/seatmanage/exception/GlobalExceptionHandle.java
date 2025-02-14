@@ -1,13 +1,11 @@
 package com.seatmanage.exception;
 
-import com.seatmanage.dto.request.ApiResponse;
-import lombok.AllArgsConstructor;
+import com.seatmanage.dto.response.ApiResponse;
 import lombok.Getter;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @ControllerAdvice
 @Getter

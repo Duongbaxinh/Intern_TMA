@@ -1,10 +1,9 @@
 package com.seatmanage.controllers;
 
-import com.seatmanage.dto.request.FloorCreationRequest;
+import com.seatmanage.dto.request.FloorRequest;
 import com.seatmanage.dto.response.ApiResponse;
 import com.seatmanage.services.FloorService;
 import jakarta.validation.Valid;
-import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,7 +14,7 @@ public class FloorController {
     FloorService floorService;
 
     @PostMapping
-    ApiResponse<Object> createFloor(@RequestBody @Valid FloorCreationRequest floorRequestCreation) {
+    ApiResponse<Object> createFloor(@RequestBody @Valid FloorRequest floorRequestCreation) {
         return ApiResponse.builder()
                 .code(200)
                 .msg("create floor successfully")
@@ -28,22 +27,23 @@ public class FloorController {
         return ApiResponse.builder().code(200).msg("get all floors").result(floorService.getAll()).build();
     }
 
-    @GetMapping(path = ":id")
-    ApiResponse<Object> getFloorById(@PathVariable("id") String id) {
+    @GetMapping("{id}")
+    ApiResponse<Object> getFloorById(@PathVariable String id) {
         return ApiResponse.builder().code(200).msg("get floor by id: " + id).result(floorService.getFloorById(id)).build();
     }
 
-    @PutMapping(path = ":id")
-    ApiResponse<Object> updateFloorById(@PathVariable("id") String id, FloorCreationRequest floorCreationRequest){
+    @PutMapping("{id}")
+    ApiResponse<Object> updateFloorById(@PathVariable String id, @RequestBody FloorRequest floorRequest){
+        System.out.println("run updateFloorById" + floorRequest.getName());
         return  ApiResponse.builder().code(200)
                 .msg("update floor with id " + id  +" successfully")
-                .result(floorService.updateFloor(id,floorCreationRequest)).build();
+                .result(floorService.updateFloor(id, floorRequest)).build();
     }
 
-    @DeleteMapping(path = "id")
-    ApiResponse<Object> deleteFloorById(@PathVariable("id") String id){
+    @DeleteMapping("{id}")
+    ApiResponse<Object> deleteFloorById(@PathVariable String id){
         return  ApiResponse.builder().code(200)
-                .msg("delete floor with id " + id  +" successfully")
+                .msg("delete floor with id " +  id  +" successfully")
                 .result(floorService.deleteFloor(id)).build();
     }
 

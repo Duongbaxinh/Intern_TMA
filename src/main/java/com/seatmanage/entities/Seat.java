@@ -19,7 +19,7 @@ import java.util.List;
 @FieldDefaults(level = AccessLevel.PUBLIC)
 public class Seat {
     public enum TypeSeat {
-        TEMPORARY,PERMANENT
+        TEMPORARY ,PERMANENT
     }
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -30,16 +30,16 @@ public class Seat {
     double posX;
     double posY;
 
-    @Column(unique = true, nullable = false)
+    @Column( unique = false, nullable = false)
     @Enumerated(EnumType.STRING)
-    TypeSeat typeSeat;
+    TypeSeat typeSeat = TypeSeat.TEMPORARY;
 
     @ManyToOne
     @JoinColumn(name = "roomId")
     Room room;
 
     @OneToOne
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "userId", nullable = true)
     User user;
 
     @CreationTimestamp
