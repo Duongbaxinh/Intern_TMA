@@ -33,7 +33,7 @@ public class Hall {
 
     @ManyToOne
     @OnDelete(action = OnDeleteAction.SET_NULL)
-    @JoinColumn(name = "floor_id",referencedColumnName = "id",nullable = true)
+    @JoinColumn(name = "floorId",referencedColumnName = "id",nullable = true)
     Floor floor;
 
     @OneToMany(mappedBy = "hall")

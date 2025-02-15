@@ -38,13 +38,17 @@ public class RoomService {
     }
 
     public RoomDTO createRoom(RoomRequest roomRequest) {
-        Hall hall =
-                Optional.ofNullable(roomRequest.hallId).map(hallService::getHallByIdDefault)
-                        .orElseThrow(()->new RuntimeException("Hall not found"));
-        Room roomExisted =
-                roomRepository.findRoomByNamAndHallId(roomRequest.name, roomRequest.hallId).orElse(null);
+
+        Hall hall = Optional.ofNullable(roomRequest.hallId)
+                    .map(hallService::getHallByIdDefault)
+                    .orElseThrow(()->new RuntimeException("Hall not found"));
+        Room roomExisted = roomRepository.findRoomByNamAndHallId(roomRequest.name, roomRequest.hallId).orElse(null);
+
         if (roomExisted != null) throw new RuntimeException("Room already exist");
-        Room room = Room.builder().name(roomRequest.name).description(roomRequest.description).hall(hall).build();
+
+        Room room = Room.builder().name(roomRequest.name)
+                    .description(roomRequest.description).hall(hall)
+                    .build();
         return roomMapper.toRoomDTO(roomRepository.save(room));
     }
 
@@ -61,7 +65,8 @@ public class RoomService {
         Optional.ofNullable(roomUpdate.getDescription()).ifPresent(room::setDescription);
 
         Optional.ofNullable(roomUpdate.getHallId())
-                .map(hallService::getHallByIdDefault)
+                .map(hallId -> Optional.ofNullable(hallService.getHallByIdDefault(hallId))
+                        .orElseThrow(()->new RuntimeException("Hall not found")))
                 .ifPresent(room::setHall);
 
         return roomMapper.toRoomDTO(roomRepository.save(room));

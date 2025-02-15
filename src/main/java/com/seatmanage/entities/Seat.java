@@ -39,7 +39,7 @@ public class Seat {
     Room room;
 
     @OneToOne
-    @JoinColumn(name = "userId", nullable = true)
+    @JoinColumn(name = "userId", nullable = true,unique = true)
     User user;
 
     @CreationTimestamp

@@ -6,17 +6,19 @@ import com.seatmanage.exception.AppExceptionHandle;
 import com.seatmanage.exception.ErrorCode;
 import com.seatmanage.mappers.UserMapper;
 import com.seatmanage.repositories.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
 public class UserService {
-    @Autowired
-    private UserRepository userRepository;
-    @Autowired
-    private UserMapper userMapper;
+    private final UserRepository userRepository;
+    private final UserMapper userMapper;
+
+    public UserService(UserRepository userRepository, UserMapper userMapper) {
+        this.userRepository = userRepository;
+        this.userMapper = userMapper;
+    }
 
     public User addUser(UserRequest user) {
         List<User> userExited = userRepository.findByEmailAddress(user.getFirstName());
@@ -29,7 +31,7 @@ public class UserService {
     }
     public User getUserById(String id) {
         User userExisted =  userRepository.findById(id).orElse(null);
-        if(userExisted == null)throw  new RuntimeException("User not found");
+        if(userExisted == null) throw  new RuntimeException("User not found");
         return userExisted;
     }
     public List<User> getAllUsers() {
