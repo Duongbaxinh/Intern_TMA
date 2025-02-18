@@ -13,18 +13,49 @@ import java.util.List;
 
 @Service
 public class UserService {
-    @Autowired
-    private UserRepository userRepository;
-    @Autowired
-    private UserMapper userMapper;
-
-    public User addUser(UserCreationRequest user) {
-        List<User> userExited = userRepository.findByFirstname(user.getFirstName());
-        if(!userExited.isEmpty()){
-            throw new AppExceptionHandle(ErrorCode.EXISTED_USER);
-        }
-        User newUser = userMapper.toUser(user);
-       return userRepository.save(newUser);
-
+    private final UserRepository userRepository;
+    private final UserMapper userMapper;
+   private final PasswordEncoder passwordEncoder;
+   private final RoleService roleService;
+    public UserService(UserRepository userRepository, UserMapper userMapper, PasswordEncoder passwordEncoder, RoleService roleService) {
+        this.userRepository = userRepository;
+        this.userMapper = userMapper;
+               this.passwordEncoder = passwordEncoder;
+               this.roleService = roleService;
     }
+
+
+    public UserDTO addUser(UserRequest user) {
+                 User userEx = userRepository.findByUserName(user.getUsername()).orElse(null);
+                 if(userEx != null) throw new RuntimeException("user already exist");
+                Role role =  Optional.ofNullable(user.getRoleId()).map(roleService::getRoleById).orElse(null);
+                user.setPassword( passwordEncoder.encode(user.getPassword()));
+        User newUser = userMapper.toUser(user);
+               return userRepository.save(newUser);
+
+                        newUser.setRole(role);
+               return userMapper.toUserDTO(userRepository.save(newUser));
+    }
+
+    public List<UserDTO> getAllUsers() {
+               return userRepository.findAll()
+                               .stream()
+                               .map(userMapper::toUserDTO)
+                               .collect(Collectors.toList());
+           }
+
+    public UserDTO deleteUser(String userId) {
+                User user = userRepository.findById(userId).orElse(null);
+                if(user == null) throw  new RuntimeException("User not found");
+                userRepository.deleteById(userId);
+                return userMapper.toUserDTO(user);
+    }
+    public User getUserByUserName(String username){
+                User user =  userRepository.findByUserName(username).orElse(null);
+                if(user == null) throw new AppExceptionHandle(ErrorCode.NOT_FOUND_USER);
+                return user;
+            }
+
+
+
 }
