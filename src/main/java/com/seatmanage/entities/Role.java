@@ -1,5 +1,6 @@
 package com.seatmanage.entities;
 
+import com.seatmanage.config.ConfigRole;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -18,16 +19,13 @@ import java.util.UUID;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class Role {
-    public enum RoleName {
-        ADMIN, USER, MODERATOR
-    }
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    UUID id;
+    String id;
 
-    @Column(unique = true, nullable = false)
+    @Column(unique = true, nullable = false, length = 50)
     @Enumerated(EnumType.STRING)
-    RoleName roleName;
+    ConfigRole roleName;
 
     @OneToMany(mappedBy = "role")
     List<User> users;

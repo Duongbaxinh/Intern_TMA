@@ -1,15 +1,19 @@
 package com.seatmanage.services;
 
-import com.seatmanage.dto.request.UserCreationRequest;
+import com.seatmanage.dto.request.UserRequest;
+import com.seatmanage.dto.response.UserDTO;
+import com.seatmanage.entities.Role;
 import com.seatmanage.entities.User;
 import com.seatmanage.exception.AppExceptionHandle;
 import com.seatmanage.exception.ErrorCode;
 import com.seatmanage.mappers.UserMapper;
 import com.seatmanage.repositories.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class UserService {
@@ -26,15 +30,13 @@ public class UserService {
 
 
     public UserDTO addUser(UserRequest user) {
-                 User userEx = userRepository.findByUserName(user.getUsername()).orElse(null);
-                 if(userEx != null) throw new RuntimeException("user already exist");
-                Role role =  Optional.ofNullable(user.getRoleId()).map(roleService::getRoleById).orElse(null);
-                user.setPassword( passwordEncoder.encode(user.getPassword()));
+        User userEx = userRepository.findByUserName(user.getUsername()).orElse(null);
+        if(userEx != null) throw new RuntimeException("user already exist");
+        Role role =  Optional.ofNullable(user.getRoleId()).map(roleService::getRoleById).orElse(null);
+        user.setPassword( passwordEncoder.encode(user.getPassword()));
         User newUser = userMapper.toUser(user);
-               return userRepository.save(newUser);
-
-                        newUser.setRole(role);
-               return userMapper.toUserDTO(userRepository.save(newUser));
+        newUser.setRole(role);
+        return userMapper.toUserDTO(userRepository.save(newUser));
     }
 
     public List<UserDTO> getAllUsers() {
@@ -50,6 +52,12 @@ public class UserService {
                 userRepository.deleteById(userId);
                 return userMapper.toUserDTO(user);
     }
+    public User getUserById(String id) {
+        User userExisted =  userRepository.findById(id).orElse(null);
+        if(userExisted == null) throw  new RuntimeException("User not found");
+        return userExisted;
+    }
+
     public User getUserByUserName(String username){
                 User user =  userRepository.findByUserName(username).orElse(null);
                 if(user == null) throw new AppExceptionHandle(ErrorCode.NOT_FOUND_USER);

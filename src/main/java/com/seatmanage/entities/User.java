@@ -29,7 +29,7 @@ public class User {
     String lastName;
     String username;
 
-    @Size(min = 5, max = 20)
+    @Size(min = 5)
     String password;
 
     @ManyToOne
@@ -38,8 +38,13 @@ public class User {
     Role role;
 
     @OneToOne
-    @JoinColumn(name = "seatId")
+    @JoinColumn(name = "seatId",nullable = true)
+    @OnDelete(action = OnDeleteAction.SET_NULL)
     Seat seat;
+
+    @Column(nullable = false,columnDefinition = "BOOLEAN DEFAULT false")
+    boolean deleted = false;
+
 
     @CreationTimestamp
     @Column(updatable = false)

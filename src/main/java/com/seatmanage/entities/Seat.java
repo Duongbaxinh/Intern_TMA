@@ -5,6 +5,8 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
@@ -40,6 +42,8 @@ public class Seat {
 
     @OneToOne
     @JoinColumn(name = "userId", nullable = true,unique = true)
+    @OnDelete(action = OnDeleteAction.SET_NULL)
+
     User user;
 
     @CreationTimestamp
