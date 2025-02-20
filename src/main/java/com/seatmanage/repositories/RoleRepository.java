@@ -11,7 +11,6 @@ import java.util.Optional;
 @Repository
 public interface RoleRepository extends JpaRepository<Role,String> {
     @Query
-            ("select role from Role role where role.roleName = :roleName")
+            ("select role from Role role where role.name = :roleName")
     public Optional<Role> findRoleByName(ConfigRole roleName);
-
 }

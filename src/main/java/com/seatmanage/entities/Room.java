@@ -31,6 +31,10 @@ public class Room {
     @JoinColumn(name = "hallId")
     Hall hall;
 
+    @OneToOne
+    @JoinColumn(name = "chief")
+    User chief;
+
     @OneToMany(mappedBy = "room")
     private List<Seat> seatList;
 

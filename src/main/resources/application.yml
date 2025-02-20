@@ -11,3 +11,5 @@ spring:
     hibernate:
       ddl-auto: update
     database-platform: org.hibernate.dialect.MySQLDialect
+jwt:
+  secretKey: tPqj5U7htMmW17TW0xwFfK123cVSd3fWVaEq3kiFhJZ/PS4N98MlxjsHi+tSevnMpM+bggCSJ9XctVKoc+S3vw==

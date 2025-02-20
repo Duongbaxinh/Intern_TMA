@@ -1,17 +1,25 @@
 package com.seatmanage.controllers;
 
         import com.seatmanage.dto.request.RoleRequest;
-import com.seatmanage.dto.response.ApiResponse;
-import com.seatmanage.services.RoleService;
-import org.springframework.web.bind.annotation.*;
+        import com.seatmanage.dto.request.RoleUpdateRequest;
+        import com.seatmanage.dto.response.ApiResponse;
+        import com.seatmanage.services.PermissionService;
+        import com.seatmanage.services.RoleService;
+        import org.springframework.security.access.prepost.PreAuthorize;
+        import org.springframework.web.bind.annotation.*;
 
-        @RestController
+        import java.util.List;
+
+@RestController
 @RequestMapping("/role")
+@PreAuthorize("hasRole('ROLE_SUPERUSER')")
  public class RoleController {
     private final RoleService roleService;
+            private final PermissionService permissionService;
 
-            public RoleController(RoleService roleService) {
+            public RoleController(RoleService roleService, PermissionService permissionService) {
                 this.roleService = roleService;
+                this.permissionService = permissionService;
             }
 
             @PostMapping
@@ -22,6 +30,13 @@ import org.springframework.web.bind.annotation.*;
                               .result(roleService.createRole(request))
                               .build();
             }
+
+            @PutMapping("{id}")
+            public ApiResponse<Object> addNewPermission( @PathVariable  String id,
+                                                         @RequestBody RoleUpdateRequest roleUpdateRequest ) {
+                return  ApiResponse.builder().code(200).msg("add permission successfully")
+                        .result(roleService.addPermission(id,roleUpdateRequest.getPermissions())).build();
+            }
     @GetMapping
     public ApiResponse<Object> getAllRole() {
                 return ApiResponse.builder()
@@ -30,5 +45,6 @@ import org.springframework.web.bind.annotation.*;
                                 .result(roleService.getAllRole())
                                 .build();
             }
+
 
       }

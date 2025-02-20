@@ -10,6 +10,7 @@ import org.mapstruct.Mapping;
 public interface RoomMapper {
 
     @Mapping(target = "hallId",source = "hall.id")
+    @Mapping(target = "chief" ,source = "chief")
     @Mapping(target = "seats",source = "seatList")
     RoomDTO toRoomDTO(Room room);
 

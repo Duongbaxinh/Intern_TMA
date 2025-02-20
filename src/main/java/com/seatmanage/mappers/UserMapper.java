@@ -12,7 +12,7 @@ import org.mapstruct.Mapping;
 public interface UserMapper {
     User toUser(UserRequest userRequest);
 
-    @Mapping(target = "roleId",source = "role.id")
+    @Mapping(target = "role",source = "role.name")
     UserDTO toUserDTO(User user);
 }
 

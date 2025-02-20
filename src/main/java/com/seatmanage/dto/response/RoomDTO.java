@@ -1,8 +1,11 @@
 package com.seatmanage.dto.response;
 
 
-import com.seatmanage.entities.Seat;
-import lombok.*;
+import com.seatmanage.entities.User;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
 
 import java.util.List;
@@ -16,5 +19,6 @@ public class RoomDTO {
     String name;
     String description;
     String hallId;
+    User chief;
     List<SeatDTO> seats;
 }

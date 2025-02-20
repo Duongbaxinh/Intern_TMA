@@ -4,16 +4,20 @@ import com.seatmanage.dto.request.SeatRequest;
 import com.seatmanage.dto.response.ApiResponse;
 import com.seatmanage.services.SeatService;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/seat")
 public class SeatController {
-    @Autowired
-    private SeatService seatService;
+    private final SeatService seatService;
+
+    public SeatController(SeatService seatService) {
+        this.seatService = seatService;
+    }
 
     @PostMapping
+    @PreAuthorize("hasAnyAuthority('ROLE_SUPERUSER','ROLE_LANDLORD')")
     ApiResponse<Object> createSeat(@RequestBody @Valid SeatRequest seatRequest) {
         return ApiResponse.builder()
                 .code(200)
@@ -32,6 +36,24 @@ public class SeatController {
         return ApiResponse.builder().code(200)
                 .msg("get seat by id: " + id)
                 .result(seatService.getSeatById(id)).build();
+    }
+
+    @GetMapping("/occupant/{id}")
+    ApiResponse<Object> getOccupant(@PathVariable String id) {
+        return  ApiResponse.builder()
+                .code(200)
+                .msg("seat occupant")
+                .result(seatService.getSeatOccupantByRoomId(id))
+                .build();
+    }
+
+    @GetMapping("/{id}/user")
+    ApiResponse<Object> getUserSeat(@PathVariable String id) {
+        return ApiResponse.builder()
+                .code(200)
+                .msg("get user with seat")
+                .result(seatService.getUserBySeat(id))
+                .build();
     }
 
     @PutMapping("{id}")

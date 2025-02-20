@@ -1,19 +1,39 @@
 package com.seatmanage.config;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
+import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
 
+import javax.crypto.spec.SecretKeySpec;
+
 @Configuration
+@EnableMethodSecurity
 @EnableWebSecurity
-//@EnableMethodSecurity
 public class ConfigSecurity {
+    @Value("${jwt.secretKey}")
+    private String secretKey;
+
+    final
+    CustomAuthenticationConvert customAuthenticationConvert;
+
+    public ConfigSecurity(CustomAuthenticationConvert customAuthenticationConvert) {
+        this.customAuthenticationConvert = customAuthenticationConvert;
+    }
 
     @Bean
     public PasswordEncoder encoder() {
@@ -26,14 +46,20 @@ public class ConfigSecurity {
                         .frameOptions(HeadersConfigurer.FrameOptionsConfig::disable)
                 )
                 .authorizeHttpRequests(auth -> auth
-                        .anyRequest().permitAll()
+                        .requestMatchers(HttpMethod.POST,"/auth","/auth/login","/auth/register","/user").permitAll()
+                        .anyRequest().authenticated()
                 );
-//        http.oauth2ResourceServer(oauth2 -> oauth2.jwt( jwtConfigurer -> jwtConfigurer.decoder()));
+        http.oauth2ResourceServer(oauth2 -> oauth2.jwt( jwtConfigurer -> jwtConfigurer.decoder(jwtDecoder()).jwtAuthenticationConverter(customAuthenticationConvert)
+
+        ));
         return http.build();
     }
 
-//    @Bean
-//    public JwtConfigurer jwtConfigurer() {
-//
-//    }
+
+
+    @Bean
+    public JwtDecoder jwtDecoder() {
+        SecretKeySpec secretKeySpec = new SecretKeySpec(secretKey.getBytes(), "HS512");
+        return NimbusJwtDecoder.withSecretKey(secretKeySpec).macAlgorithm(MacAlgorithm.HS512).build();
+    }
 }

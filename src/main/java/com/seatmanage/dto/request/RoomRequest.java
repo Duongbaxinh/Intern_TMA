@@ -10,6 +10,7 @@ import lombok.experimental.FieldDefaults;
 public class RoomRequest {
     String name;
     String description;
+    String userId;
     @NotNull(message = "HALL_NOT_NULL")
     String hallId;
 }

@@ -8,8 +8,9 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
-import java.util.UUID;
+import java.util.Set;
 
 @Entity
 @Getter
@@ -20,15 +21,12 @@ import java.util.UUID;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class Role {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    String id;
-
     @Column(unique = true, nullable = false, length = 50)
     @Enumerated(EnumType.STRING)
-    ConfigRole roleName;
+    ConfigRole name;
 
-    @OneToMany(mappedBy = "role")
-    List<User> users;
+    @ManyToMany
+    List<PermissionActive> permissionActives;
 
     @CreationTimestamp
     @Column(updatable = false)

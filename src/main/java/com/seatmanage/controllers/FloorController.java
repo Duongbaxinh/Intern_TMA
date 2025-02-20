@@ -5,10 +5,12 @@ import com.seatmanage.dto.response.ApiResponse;
 import com.seatmanage.services.FloorService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/floor")
+@PreAuthorize("hasRole('ROLE_SUPERUSER')")
 public class FloorController {
     @Autowired
     FloorService floorService;

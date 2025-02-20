@@ -33,7 +33,7 @@ public class User {
     String password;
 
     @ManyToOne
-    @JoinColumn(name = "roleId",referencedColumnName = "id",nullable = true)
+    @JoinColumn(name = "roleId",referencedColumnName = "name",nullable = true)
     @OnDelete(action = OnDeleteAction.SET_NULL)
     Role role;
 
@@ -41,6 +41,10 @@ public class User {
     @JoinColumn(name = "seatId",nullable = true)
     @OnDelete(action = OnDeleteAction.SET_NULL)
     Seat seat;
+
+    @ManyToOne
+    @JoinColumn(name = "teamId")
+    Team team;
 
     @Column(nullable = false,columnDefinition = "BOOLEAN DEFAULT false")
     boolean deleted = false;
