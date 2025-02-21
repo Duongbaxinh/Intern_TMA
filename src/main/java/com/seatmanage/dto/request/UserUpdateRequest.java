@@ -16,4 +16,5 @@ public class UserUpdateRequest{
     String firstName;
     String lastName;
     String roleName;
+    String teamId;
 }

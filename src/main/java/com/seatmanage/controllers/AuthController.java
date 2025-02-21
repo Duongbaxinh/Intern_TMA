@@ -4,7 +4,9 @@ import com.nimbusds.jose.JOSEException;
 import com.seatmanage.dto.request.AuthRequest;
 import com.seatmanage.dto.request.UserRequest;
 import com.seatmanage.dto.response.ApiResponse;
+import com.seatmanage.repositories.PermissionRepository;
 import com.seatmanage.services.AuthService;
+import com.seatmanage.services.PermissionService;
 import com.seatmanage.services.UserService;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -18,6 +20,7 @@ public class AuthController {
 
     private final AuthService authService;
     private final UserService userService;
+
 
     public AuthController(AuthService authService, UserService userService) {
         this.authService = authService;
@@ -39,5 +42,7 @@ public class AuthController {
                 .build();
 
     }
+
+
 
 }

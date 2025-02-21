@@ -11,10 +11,5 @@ import java.util.Map;
 public class FloorRequest {
     String name;
     String description;
-//    Map<String,String> map;
-    public Map<String,Object> toMap(FloorRequest floorRequest){
-        ObjectMapper objectMapper = new ObjectMapper();
-        return objectMapper.convertValue(floorRequest, Map.class);
-    }
 
 }

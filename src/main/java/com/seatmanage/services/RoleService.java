@@ -1,5 +1,6 @@
 package com.seatmanage.services;
 import com.seatmanage.config.ConfigRole;
+import com.seatmanage.config.SecurityUtil;
 import com.seatmanage.dto.request.RoleRequest;
 import com.seatmanage.entities.PermissionActive;
 import com.seatmanage.entities.Role;
@@ -34,7 +35,7 @@ public class RoleService
 //        return role;
 //    }
 
-    public Role getRoleByName(ConfigRole roleName){
+    public Role getRoleByName(SecurityUtil.RoleAuth roleName){
         Role role =  roleRepository.findRoleByName(roleName).orElse(null);
         System.out.println("Check role " + role);
         if(role == null){ throw  new RuntimeException("Role Not Found"); }
@@ -43,7 +44,7 @@ public class RoleService
 
     public Role createRole(RoleRequest roleRequest){
         System.out.println("Create Role");
-        Role roleEx = roleRepository.findRoleByName(ConfigRole.valueOf(roleRequest.getRoleName())).orElse(null);
+        Role roleEx = roleRepository.findRoleByName(SecurityUtil.RoleAuth.valueOf(roleRequest.getRoleName())).orElse(null);
         System.out.println("Check role 1");
         if(roleEx != null) throw new  RuntimeException("Role Exist");
         System.out.println("Check role 2");
@@ -53,7 +54,7 @@ public class RoleService
              permissionActives = permissionService.getPermissionList(roleRequest.permission);
         }
         System.out.println("check" + permissionActives);
-        Role role = Role.builder().name(ConfigRole.valueOf(roleRequest.getRoleName()))
+        Role role = Role.builder().name(SecurityUtil.RoleAuth.valueOf(roleRequest.getRoleName()))
                         .permissionActives(permissionActives).build();
         return roleRepository.save(role);
     }
@@ -62,7 +63,8 @@ public class RoleService
               return  roleRepository.findAll();
           }
           public Role addPermission(String roleId,List<String> permissionActiveList){
-            Role role = roleRepository.findRoleByName(ConfigRole.valueOf(roleId)).orElseThrow(() -> new RuntimeException(
+            Role role =
+                    roleRepository.findRoleByName(SecurityUtil.RoleAuth.valueOf(roleId)).orElseThrow(() -> new RuntimeException(
                     "Role Not " +
                     "Found"));
             permissionActiveList.forEach(permissionActive -> {

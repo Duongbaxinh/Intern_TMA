@@ -11,6 +11,7 @@ import org.mapstruct.Mapping;
 public interface SeatMapper {
     @Mapping(target = "roomId",source = "room.id")
     @Mapping(target = "userId",source = "user.id")
+    @Mapping(target = "color",source = "user.team.code")
     SeatDTO toSeatDTO(Seat seat);
 
     Seat toSeat(SeatRequest seatRequest);

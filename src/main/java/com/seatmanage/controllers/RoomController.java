@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/room")
-@PreAuthorize("hasRole('ROLE_SUPERUSER')")
+
 public class RoomController {
     final
     RoomService roomService;
@@ -20,6 +20,7 @@ public class RoomController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ROLE_SUPERUSER')")
     ApiResponse<Object> createRoom(@RequestBody @Valid RoomRequest roomRequest) {
         return ApiResponse.builder()
                 .code(200)
@@ -29,17 +30,20 @@ public class RoomController {
     }
 
     @GetMapping
+    @PreAuthorize("hasRole('ROLE_SUPERUSER')")
     ApiResponse<Object> getRoomList() {
         return ApiResponse.builder().code(200).msg("get all room").result(roomService.getAll()).build();
     }
 
     @GetMapping("/chief/{id}")
+    @PreAuthorize("hasRole('ROLE_SUPERUSER')")
     ApiResponse<Object> getRoomSeatByChief( @PathVariable String id) {
         return ApiResponse.builder().code(200).msg("get all room by chief")
                 .result(roomService.getRoomSeatByChief(id)).build();
     }
 
     @GetMapping("{id}")
+    @PreAuthorize("hasAnyRole('ROLE_SUPERUSER','ROLE_LANDLORD')")
     ApiResponse<Object> getRoomById(@PathVariable String id) {
         return ApiResponse.builder().code(200)
                 .msg("get room by id: " + id)
@@ -47,6 +51,7 @@ public class RoomController {
     }
 
     @PutMapping("{id}")
+    @PreAuthorize("hasRole('ROLE_SUPERUSER')")
     ApiResponse<Object> updateRoomById(@PathVariable String id, @RequestBody RoomRequest roomRequest){
         System.out.println("run updateHallById" + roomRequest.getName());
         return  ApiResponse.builder().code(200)
@@ -55,6 +60,7 @@ public class RoomController {
     }
 
     @DeleteMapping("{id}")
+    @PreAuthorize("hasRole('ROLE_SUPERUSER')")
     ApiResponse<Object> deleteRoomById(@PathVariable String id){
         return  ApiResponse.builder().code(200)
                 .msg("delete hall with id " +  id  +" successfully")

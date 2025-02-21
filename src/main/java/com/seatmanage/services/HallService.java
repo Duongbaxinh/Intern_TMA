@@ -66,10 +66,10 @@ public class HallService {
         Floor floorExisted =
                 Optional.ofNullable(hallUpdate.getFloorId())
                         .map(floorService::getFloorByIdDefault)
-                        .orElseThrow(()-> new RuntimeException("Floor Not Found"));
+                                .orElse(null);
         Optional.ofNullable(hallUpdate.getName()).ifPresent(hall::setName);
         Optional.ofNullable(hallUpdate.getDescription()).ifPresent(hall::setDescription);
-        hall.setFloor(floorExisted);
+        Optional.ofNullable(floorExisted).ifPresent(hall::setFloor);
         return hallMapper.toHallDTO(hallRepository.save(hall));
     }
 

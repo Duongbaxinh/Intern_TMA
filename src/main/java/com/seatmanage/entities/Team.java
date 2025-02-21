@@ -7,6 +7,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.security.Timestamp;
+import java.time.LocalDateTime;
 
 @Entity
 @Data
@@ -21,7 +22,10 @@ public class Team {
     String name;
     String code;
     @CreationTimestamp
-    Timestamp createTime;
+    @Column(updatable = false)
+    private LocalDateTime createdAt;
+
     @UpdateTimestamp
-    Timestamp updateTime;
+    private LocalDateTime updatedAt;
+
 }

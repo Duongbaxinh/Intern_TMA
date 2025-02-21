@@ -67,7 +67,7 @@ public class SeatService {
 
 //      Check user is chief
         boolean isPrivate = SecurityUtil.isPrivate(room.getChief() != null,room.getChief());
-        if(!isPrivate) throw  new RuntimeException("Forbidden !!!");
+        if(!isPrivate) throw  new RuntimeException("Not permission to create seat of this room ! !!!");
 
 //      Check Seat have in room ?
         seatRepository.findSeatByNamAndRoomId(seatRequest.name,room.getId())
@@ -108,7 +108,7 @@ public class SeatService {
     public SeatDTO updateSeat(String seatId,SeatRequest seatRequest) {
         Seat seat = getSeatByIdDefault(seatId);
         boolean isPrivate = SecurityUtil.isPrivate(seat.getRoom().getChief() != null,seat.getRoom().getChief());
-        if(!isPrivate) throw  new RuntimeException("Forbidden !!!");
+        if(!isPrivate) throw  new RuntimeException("Not permission to update seat of this room !");
         Optional.ofNullable(seatRequest.getName()).ifPresent(seat::setName);
         Optional.ofNullable(seatRequest.getDescription()).ifPresent(seat::setDescription);
         Optional.of(seatRequest.getPosX()).ifPresent(seat::setPosX);
@@ -128,7 +128,7 @@ public class SeatService {
     public SeatDTO deleteSeat(String seatId){
         Seat seat = getSeatByIdDefault(seatId);
         boolean isPrivate = SecurityUtil.isPrivate(seat.getRoom().getChief() != null,seat.getRoom().getChief());
-        if(!isPrivate) throw  new RuntimeException("Forbidden !!!");
+        if(!isPrivate) throw  new RuntimeException("Not permission to delete seat of this room !");
         seatRepository.deleteById(seatId);
         return seatMapper.toSeatDTO(seat);
     }
@@ -137,8 +137,16 @@ public class SeatService {
         return seatRepository.findSeatOccupantByRoomId(roomId).stream().map(seatMapper::toSeatDTO).collect(Collectors.toList());
     }
 
+
     public UserDTO getUserBySeat(String seatId){
         Seat seat = getSeatByIdDefault(seatId);
         return userMapper.toUserDTO(seat.getUser());
+    }
+
+    public List<SeatDTO> getSeatByRoomId(String roomId){
+        Room room = roomService.getRoomByIdDefault(roomId);
+        boolean isPrivate = SecurityUtil.isPrivate(room.getChief() != null,room.getChief());
+        if(!isPrivate) throw  new RuntimeException("Not permission to get seat of this room !");
+        return seatRepository.findSeatByRoomId(roomId).stream().map(seatMapper::toSeatDTO).collect(Collectors.toList());
     }
 }

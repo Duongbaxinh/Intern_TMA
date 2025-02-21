@@ -18,4 +18,5 @@ public class SeatDTO {
      String typeSeat;
      String roomId;
      String userId;
+     String color;
 }

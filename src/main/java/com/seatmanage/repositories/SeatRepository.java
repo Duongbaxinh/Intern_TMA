@@ -20,6 +20,10 @@ public interface SeatRepository extends JpaRepository<Seat,String> {
     @Query("select s from Seat s where s.room.id = :romId and s.user != null ")
     List<Seat> findSeatOccupantByRoomId(String roomId);
 
+
     @Query("SELECT s.user  from Seat s where s.id = :seatId ")
     Optional<User> findUserBySeat(String seatId);
+
+    @Query("select s from Seat s where  s.room.id = :roomId")
+    List<Seat> findSeatByRoomId(String roomId);
 }

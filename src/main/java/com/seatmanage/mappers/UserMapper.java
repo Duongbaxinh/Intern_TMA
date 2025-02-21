@@ -13,6 +13,7 @@ public interface UserMapper {
     User toUser(UserRequest userRequest);
 
     @Mapping(target = "role",source = "role.name")
+    @Mapping(target = "team",source = "team")
     UserDTO toUserDTO(User user);
 }
 

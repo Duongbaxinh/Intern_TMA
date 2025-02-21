@@ -19,6 +19,6 @@ public class RoomDTO {
     String name;
     String description;
     String hallId;
-    User chief;
+    UserDTO chief;
     List<SeatDTO> seats;
 }

@@ -37,6 +37,8 @@ public class RoomService {
 
     public RoomDTO getRoomById(String roomId) {
         Room room = roomRepository.findById(roomId).orElseThrow(()-> new RuntimeException("Hall not found"));
+        boolean isPrivate =  SecurityUtil.isPrivate(room.chief!= null, room.chief);
+        if(!isPrivate) throw new RuntimeException("Not permission to access room");
         return roomMapper.toRoomDTO(room);
     }
 

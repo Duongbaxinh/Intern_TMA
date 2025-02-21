@@ -12,7 +12,7 @@ package com.seatmanage.controllers;
 
 @RestController
 @RequestMapping("/role")
-@PreAuthorize("hasRole('ROLE_SUPERUSER')")
+//@PreAuthorize("hasRole('SUPERUSER')")
  public class RoleController {
     private final RoleService roleService;
             private final PermissionService permissionService;

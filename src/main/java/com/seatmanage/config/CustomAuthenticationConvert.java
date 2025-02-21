@@ -38,7 +38,7 @@ public class CustomAuthenticationConvert implements Converter<Jwt, AbstractAuthe
         if(user.getRole() != null){
         listAuth.add(new SimpleGrantedAuthority("ROLE_" + user.getRole().getName()));
             user.getRole().getPermissionActives().forEach(permissionActive -> {
-                listAuth.add(new SimpleGrantedAuthority(permissionActive.getName()));
+                listAuth.add(new SimpleGrantedAuthority(String.valueOf(permissionActive.getName())));
             });
         }
 

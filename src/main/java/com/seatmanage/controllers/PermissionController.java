@@ -12,7 +12,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/permission")
-@PreAuthorize("hasRole('ROLE_SUPERUSER')")
+//@PreAuthorize("hasRole('ROLE_SUPERUSER')")
 public class PermissionController {
     private final PermissionService permissionService;
 
