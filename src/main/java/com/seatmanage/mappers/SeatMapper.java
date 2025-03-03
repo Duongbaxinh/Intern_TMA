@@ -1,6 +1,5 @@
 package com.seatmanage.mappers;
 
-import com.seatmanage.dto.creation.SeatCreation;
 import com.seatmanage.dto.request.SeatRequest;
 import com.seatmanage.dto.response.SeatDTO;
 import com.seatmanage.entities.Seat;

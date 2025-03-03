@@ -1,7 +1,10 @@
 package com.seatmanage.services;
 
 import com.seatmanage.config.SecurityUtil;
+import com.seatmanage.dto.request.AssignSeatRequest;
+import com.seatmanage.dto.request.ReassignSeatRequest;
 import com.seatmanage.dto.request.SeatRequest;
+import com.seatmanage.dto.request.SetupSeatRequest;
 import com.seatmanage.dto.response.SeatDTO;
 import com.seatmanage.dto.response.UserDTO;
 import com.seatmanage.entities.Room;
@@ -12,9 +15,13 @@ import com.seatmanage.mappers.UserMapper;
 import com.seatmanage.repositories.SeatRepository;
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.util.IllegalFormatCodePointException;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -27,14 +34,18 @@ public class SeatService {
     private final RoomService roomService;
     private final SeatMapper seatMapper;
     private final UserMapper userMapper;
+    final SimpMessagingTemplate messagingTemplate;
+    private final WebSocketService webSocketService;
 
     public SeatService(SeatRepository seatRepository, UserService userService, RoomService roomService,
-                       SeatMapper seatMapper,UserMapper userMapper) {
+                       SeatMapper seatMapper, UserMapper userMapper, SimpMessagingTemplate messagingTemplate, WebSocketService webSocketService) {
         this.seatRepository = seatRepository;
         this.userService = userService;
         this.roomService = roomService;
         this.seatMapper = seatMapper;
         this.userMapper = userMapper;
+        this.messagingTemplate = messagingTemplate;
+        this.webSocketService = webSocketService;
     }
 
     public SeatDTO getSeatById(String seatId) {
@@ -91,7 +102,7 @@ public class SeatService {
 
         Seat seat = Seat.builder().name(seatRequest.name)
                     .description(seatRequest.description)
-                    .typeSeat(Seat.TypeSeat.valueOf(seatRequest.typeSeat))
+                    .typeSeat(seatRequest.typeSeat != null ? Seat.TypeSeat.valueOf(seatRequest.typeSeat) : null)
                     .room(room)
                     .user(user)
                     .build();
@@ -100,6 +111,10 @@ public class SeatService {
 
     public List<SeatDTO> getAll(){
         List<Seat> seats = seatRepository.findAll();
+        Seat seat = seats.get(0);
+
+        webSocketService.sendUpdatedSeat(seatMapper.toSeatDTO(seat));
+
         return seats.stream()
                 .map(seatMapper::toSeatDTO)
                 .collect(Collectors.toList());
@@ -137,7 +152,6 @@ public class SeatService {
         return seatRepository.findSeatOccupantByRoomId(roomId).stream().map(seatMapper::toSeatDTO).collect(Collectors.toList());
     }
 
-
     public UserDTO getUserBySeat(String seatId){
         Seat seat = getSeatByIdDefault(seatId);
         return userMapper.toUserDTO(seat.getUser());
@@ -148,5 +162,40 @@ public class SeatService {
         boolean isPrivate = SecurityUtil.isPrivate(room.getChief() != null,room.getChief());
         if(!isPrivate) throw  new RuntimeException("Not permission to get seat of this room !");
         return seatRepository.findSeatByRoomId(roomId).stream().map(seatMapper::toSeatDTO).collect(Collectors.toList());
+    }
+
+    public SeatDTO assignSeat(AssignSeatRequest assignSeatRequest) {
+        Seat seat = getSeatByIdDefault(assignSeatRequest.seatId);
+        User user = userService.getUserById(assignSeatRequest.userId);
+        User getSeatByUserId = userService.getUserById(assignSeatRequest.userId);
+        if(getSeatByUserId != null) throw  new RuntimeException("User already assigned to this seat !");
+        if(seat.getUser() != null) throw  new RuntimeException("Seat has already been assigned to this seat !");
+        seat.setUser(user);
+        seatRepository.save(seat);
+        return seatMapper.toSeatDTO(seat);
+    }
+    public SeatDTO reassignSeat(ReassignSeatRequest reassignSeatRequest) {
+        Seat seatNew = getSeatByIdDefault(reassignSeatRequest.newSeatId);
+        Seat seatOld = getSeatByIdDefault(reassignSeatRequest.oldSeatId);
+        User user = userService.getUserById(reassignSeatRequest.userId);
+        if(!Objects.equals(seatOld.getUser().getId(), reassignSeatRequest.userId)) throw  new RuntimeException("this is not user's seat !");
+        if(seatNew.getUser() != null) throw  new RuntimeException("User already assigned to this seat !");
+        seatOld.setUser(null);
+        seatRepository.save(seatOld);
+        seatNew.setUser(user);
+        seatRepository.save(seatNew);
+        return seatMapper.toSeatDTO(seatNew);
+    }
+
+    public SeatDTO setupTypeSeat(String seatId, SetupSeatRequest typeSeat){
+        if(typeSeat.getTypeSeat() == Seat.TypeSeat.TEMPORARY && typeSeat.expiration == null) throw  new RuntimeException("Type Seat Temporary required a expiration !");
+        Seat seat = getSeatByIdDefault(seatId);
+        boolean isPrivate = SecurityUtil.isPrivate(seat.getRoom().getChief() != null,seat.getRoom().getChief());
+        LocalDateTime expiration = typeSeat.typeSeat == Seat.TypeSeat.PERMANENT ? null : typeSeat.expiration;
+        if(!isPrivate) throw  new RuntimeException("Not permission to update seat of this room !");
+        seat.setTypeSeat(typeSeat.getTypeSeat());
+        seat.setExpiration(expiration);
+        seatRepository.save(seat);
+        return seatMapper.toSeatDTO(seat);
     }
 }

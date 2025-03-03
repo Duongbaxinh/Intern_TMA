@@ -1,6 +1,5 @@
 package com.seatmanage.services;
 
-import com.seatmanage.config.ConfigRole;
 import com.seatmanage.config.SecurityUtil;
 import com.seatmanage.dto.request.UserRequest;
 import com.seatmanage.dto.request.UserUpdateRequest;
@@ -15,8 +14,6 @@ import com.seatmanage.mappers.UserMapper;
 import com.seatmanage.repositories.RoleRepository;
 import com.seatmanage.repositories.TeamRepository;
 import com.seatmanage.repositories.UserRepository;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 

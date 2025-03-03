@@ -32,14 +32,13 @@ public class UserController {
 
     @PutMapping("{id}")
     ApiResponse<Object> updateUser(@PathVariable String id, @RequestBody @Valid UserUpdateRequest userRequest) {
-
        return  ApiResponse.builder().code(200).msg("update user successfully")
                 .result(userService.updateUser(id,userRequest)).build();
     }
 
     @GetMapping
-        @PreAuthorize("hasAnyAuthority('ROLE_SUPERUSER','ROLE_LANDLORD')")
-    ApiResponse<Object> getUser() {
+    @PreAuthorize("hasAnyAuthority('ROLE_SUPERUSER','ROLE_LANDLORD')")
+    ApiResponse<Object> getAllUser() {
         return  ApiResponse.builder()
                 .code(200)
                 .msg("get all user")

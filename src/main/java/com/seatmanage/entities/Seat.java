@@ -10,6 +10,7 @@ import org.hibernate.annotations.OnDeleteAction;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.List;
 
 @Entity
@@ -32,9 +33,11 @@ public class Seat {
     double posX;
     double posY;
 
-    @Column( unique = false, nullable = false)
+    @Column( unique = false, nullable = true)
     @Enumerated(EnumType.STRING)
-    TypeSeat typeSeat = TypeSeat.TEMPORARY;
+    TypeSeat typeSeat ;
+
+    LocalDateTime expiration;
 
     @ManyToOne
     @JoinColumn(name = "roomId")
@@ -43,7 +46,6 @@ public class Seat {
     @OneToOne
     @JoinColumn(name = "userId", nullable = true,unique = true)
     @OnDelete(action = OnDeleteAction.SET_NULL)
-
     User user;
 
     @CreationTimestamp

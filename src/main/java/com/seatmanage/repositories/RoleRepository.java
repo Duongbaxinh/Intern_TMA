@@ -1,6 +1,5 @@
 package com.seatmanage.repositories;
 
-import com.seatmanage.config.ConfigRole;
 import com.seatmanage.config.SecurityUtil;
 import com.seatmanage.entities.Role;
 import org.springframework.data.jpa.repository.JpaRepository;

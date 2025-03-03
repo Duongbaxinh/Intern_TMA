@@ -1,10 +1,7 @@
 package com.seatmanage.config;
 
-import com.seatmanage.entities.PermissionActive;
-import com.seatmanage.entities.Role;
 import com.seatmanage.entities.User;
 import com.seatmanage.repositories.UserRepository;
-import org.springframework.core.SimpleAliasRegistry;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
@@ -14,9 +11,7 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Component
 public class CustomAuthenticationConvert implements Converter<Jwt, AbstractAuthenticationToken> {

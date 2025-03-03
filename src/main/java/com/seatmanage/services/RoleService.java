@@ -1,5 +1,4 @@
 package com.seatmanage.services;
-import com.seatmanage.config.ConfigRole;
 import com.seatmanage.config.SecurityUtil;
 import com.seatmanage.dto.request.RoleRequest;
 import com.seatmanage.entities.PermissionActive;
@@ -10,10 +9,8 @@ import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
 import org.springframework.stereotype.Service;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 @Service
 @FieldDefaults(level = AccessLevel.PUBLIC)

@@ -1,6 +1,5 @@
 package com.seatmanage.repositories;
 
-import com.seatmanage.entities.Hall;
 import com.seatmanage.entities.Room;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
