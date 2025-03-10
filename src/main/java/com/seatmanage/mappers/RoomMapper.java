@@ -8,12 +8,13 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Named;
 
-@Mapper(componentModel = "spring",uses = {SeatDTO.class, UserDTO.class})
+@Mapper(componentModel = "spring",uses = {SeatDTO.class, UserMapper.class})
 public interface RoomMapper {
 
     @Mapping(target = "hallId",source = "hall.id")
     @Mapping(target = "chief" ,source = "chief" , qualifiedByName = "mapChiefToUserDTO")
     @Mapping(target = "seats",source = "seatList")
+    @Mapping(target = "object",source = "object")
     RoomDTO toRoomDTO(Room room);
 
     @Named("mapChiefToUserDTO")

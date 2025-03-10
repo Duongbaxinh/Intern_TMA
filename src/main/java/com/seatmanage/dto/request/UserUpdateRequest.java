@@ -17,4 +17,5 @@ public class UserUpdateRequest{
     String lastName;
     String roleName;
     String teamId;
+    String roomId;
 }

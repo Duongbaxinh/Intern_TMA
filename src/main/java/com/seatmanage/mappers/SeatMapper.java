@@ -6,10 +6,10 @@ import com.seatmanage.entities.Seat;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", uses = {UserMapper.class})
 public interface SeatMapper {
     @Mapping(target = "roomId",source = "room.id")
-    @Mapping(target = "userId",source = "user.id")
+    @Mapping(target = "user",source = "user")
     @Mapping(target = "color",source = "user.team.code")
     SeatDTO toSeatDTO(Seat seat);
 

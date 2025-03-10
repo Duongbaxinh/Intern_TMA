@@ -20,5 +20,7 @@ public class RoomDTO {
     String description;
     String hallId;
     UserDTO chief;
+    String object;
+    int capacity;
     List<SeatDTO> seats;
 }

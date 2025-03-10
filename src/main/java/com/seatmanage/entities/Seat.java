@@ -32,10 +32,10 @@ public class Seat {
     String description;
     double posX;
     double posY;
-
-    @Column( unique = false, nullable = true)
+    Boolean isOccupied;
+    @Column( unique = false, nullable = false)
     @Enumerated(EnumType.STRING)
-    TypeSeat typeSeat ;
+    TypeSeat typeSeat = TypeSeat.TEMPORARY;
 
     LocalDateTime expiration;
 

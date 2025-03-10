@@ -8,6 +8,7 @@ import lombok.experimental.FieldDefaults;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Data
 @FieldDefaults(level = AccessLevel.PUBLIC)
 public class SeatDTO {
      String id;
@@ -16,7 +17,8 @@ public class SeatDTO {
      double posX;
      double posY;
      String typeSeat;
+     boolean isOccupied;
      String roomId;
-     String userId;
+     UserDTO user;
      String color;
 }

@@ -5,11 +5,16 @@ import com.seatmanage.dto.request.ReassignSeatRequest;
 import com.seatmanage.dto.request.SeatRequest;
 import com.seatmanage.dto.request.SetupSeatRequest;
 import com.seatmanage.dto.response.ApiResponse;
+import com.seatmanage.dto.response.SeatDTO;
 import com.seatmanage.entities.Seat;
 import com.seatmanage.services.SeatService;
 import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
+import java.io.IOException;
 
 @RestController
 @RequestMapping("/seat")
@@ -17,13 +22,15 @@ import org.springframework.web.bind.annotation.*;
 public class SeatController {
     private final SeatService seatService;
 
+    @Autowired
     public SeatController(SeatService seatService) {
         this.seatService = seatService;
     }
 
+
     @PostMapping
     @PreAuthorize("hasAnyAuthority('ROLE_SUPERUSER','ROLE_LANDLORD')")
-    ApiResponse<Object> createSeat(@RequestBody @Valid SeatRequest seatRequest) {
+    ApiResponse<Object> createSeat(@RequestBody @Valid SeatRequest seatRequest) throws IOException {
         System.out.println("run at " + seatRequest.toString());
         return ApiResponse.builder()
                 .code(200)
@@ -35,6 +42,7 @@ public class SeatController {
     @GetMapping
     @PreAuthorize("hasAnyAuthority('ROLE_SUPERUSER','ROLE_LANDLORD')")
     ApiResponse<Object> getSeatList() {
+
         return ApiResponse.builder().code(200).msg("get all seat").result(seatService.getAll()).build();
     }
 
@@ -44,6 +52,14 @@ public class SeatController {
                 .msg("get seat by id: " + id)
                 .result(seatService.getSeatById(id)).build();
     }
+
+    @GetMapping("/unassign/{seatId}")
+    ApiResponse<Object> unAssignSeat(@PathVariable String seatId) throws IOException {
+        return ApiResponse.builder().code(200)
+                .msg("unassign seat by id: " + seatId)
+                .result(seatService.unAssign(seatId)).build();
+    }
+
 
     @GetMapping("/occupant/{id}")
     @PreAuthorize("hasAnyAuthority('ROLE_SUPERUSER','ROLE_LANDLORD')")
@@ -66,7 +82,7 @@ public class SeatController {
 
     @PutMapping("{id}")
     @PreAuthorize("hasAnyAuthority('ROLE_SUPERUSER','ROLE_LANDLORD')")
-    ApiResponse<Object> updateSeatId(@PathVariable String id, @RequestBody SeatRequest seatRequest){
+    ApiResponse<Object> updateSeatId(@PathVariable String id, @RequestBody SeatRequest seatRequest) throws IOException {
         System.out.println("run updateHallById" + seatRequest.getName());
         return  ApiResponse.builder().code(200)
                 .msg("update hall with id " + id  +" successfully")
@@ -75,13 +91,13 @@ public class SeatController {
 
     @DeleteMapping("{id}")
     @PreAuthorize("hasAnyAuthority('ROLE_SUPERUSER','ROLE_LANDLORD')")
-    ApiResponse<Object> deleteSeatById(@PathVariable String id){
+    ApiResponse<Object> deleteSeatById(@PathVariable String id) throws IOException {
         return  ApiResponse.builder().code(200)
-                .msg("delete hall with id " +  id  +" successfully")
+                .msg("delete seat with id " +  id  +" successfully")
                 .result(seatService.deleteSeat(id)).build();
     }
 
-    @GetMapping("/{roomId}/room")
+    @GetMapping("/{roomId}/seat")
     @PreAuthorize("hasAnyAuthority('ROLE_SUPERUSER','ROLE_LANDLORD')")
     ApiResponse<Object> getSeatByRoomId(@PathVariable String roomId) {
      return   ApiResponse.builder().code(200)
@@ -117,6 +133,18 @@ public class SeatController {
                 .build();
     }
 
+    @GetMapping("/filter")
+    public ApiResponse<Object> getSeats(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "TEMPORARY") String typeSeat,
+            @RequestParam(required = false) String roomId,
+            @RequestParam(required = false) Boolean isOccupied) {
+        Page<SeatDTO> seats = seatService.getSeatsWithPaginationAndFilter(page, size,  roomId, typeSeat, isOccupied);
+        return  ApiResponse.builder().code(200)
+                .msg("get seat successfully")
+                .result(seats).build();
+    }
 
 
 }

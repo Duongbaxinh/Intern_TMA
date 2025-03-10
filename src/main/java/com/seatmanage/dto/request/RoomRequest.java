@@ -11,6 +11,7 @@ public class RoomRequest {
     String name;
     String description;
     String userId;
+    int capacity;
     @NotNull(message = "HALL_NOT_NULL")
     String hallId;
 }

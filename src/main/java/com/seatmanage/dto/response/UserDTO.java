@@ -17,5 +17,6 @@ public class UserDTO {
     String firstName;
     String lastName;
     String role;
-    Team team;
+    String roomId;
+    TeamDTO team;
 }

@@ -27,6 +27,11 @@ public class Room {
 
     String description;
 
+    String image;
+    int capacity;
+
+    @Column(length = 3000)
+    String object;
     @ManyToOne
     @JoinColumn(name = "hallId")
     Hall hall;
@@ -35,7 +40,7 @@ public class Room {
     @JoinColumn(name = "chief")
     User chief;
 
-    @OneToMany(mappedBy = "room")
+    @OneToMany(mappedBy = "room", cascade = CascadeType.REMOVE,orphanRemoval = true)
     private List<Seat> seatList;
 
     @CreationTimestamp

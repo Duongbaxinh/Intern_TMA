@@ -1,10 +1,10 @@
 package com.seatmanage.services;
-
 import com.seatmanage.config.SecurityUtil;
 import com.seatmanage.dto.request.AssignSeatRequest;
 import com.seatmanage.dto.request.ReassignSeatRequest;
 import com.seatmanage.dto.request.SeatRequest;
 import com.seatmanage.dto.request.SetupSeatRequest;
+import com.seatmanage.dto.response.ReAssignSeatDTO;
 import com.seatmanage.dto.response.SeatDTO;
 import com.seatmanage.dto.response.UserDTO;
 import com.seatmanage.entities.Room;
@@ -15,36 +15,34 @@ import com.seatmanage.mappers.UserMapper;
 import com.seatmanage.repositories.SeatRepository;
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.IllegalFormatCodePointException;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 @FieldDefaults(level = AccessLevel.PUBLIC)
 public class SeatService {
-
     private final SeatRepository seatRepository;
     private final UserService userService;
     private final RoomService roomService;
     private final SeatMapper seatMapper;
     private final UserMapper userMapper;
-    final SimpMessagingTemplate messagingTemplate;
     private final WebSocketService webSocketService;
 
     public SeatService(SeatRepository seatRepository, UserService userService, RoomService roomService,
-                       SeatMapper seatMapper, UserMapper userMapper, SimpMessagingTemplate messagingTemplate, WebSocketService webSocketService) {
+                       SeatMapper seatMapper, UserMapper userMapper, WebSocketService webSocketService) {
         this.seatRepository = seatRepository;
         this.userService = userService;
         this.roomService = roomService;
         this.seatMapper = seatMapper;
         this.userMapper = userMapper;
-        this.messagingTemplate = messagingTemplate;
+
         this.webSocketService = webSocketService;
     }
 
@@ -71,27 +69,28 @@ public class SeatService {
         return  seat;
     }
 
-    public SeatDTO createSeat(SeatRequest seatRequest) {
+    public SeatDTO createSeat(SeatRequest seatRequest) throws IOException {
 
 //      Check room existed
         Room room = roomService.getRoomByIdDefault(seatRequest.roomId);
-
+        System.out.println("run at here 1");
 //      Check user is chief
         boolean isPrivate = SecurityUtil.isPrivate(room.getChief() != null,room.getChief());
         if(!isPrivate) throw  new RuntimeException("Not permission to create seat of this room ! !!!");
-
+        System.out.println("run at here 2");
 //      Check Seat have in room ?
         seatRepository.findSeatByNamAndRoomId(seatRequest.name,room.getId())
                 .ifPresent(roomExisted -> {
                     throw new RuntimeException("Seat already exist");
                 });
-
+        System.out.println("run at here 3");
 //      If request have userId -> Check user existed?
         User user = Optional.ofNullable(seatRequest.userId)
                     .map(userId -> Optional.ofNullable(userService.getUserById(userId))
                            .orElseThrow(()-> new RuntimeException("User not found!")))
                     .orElse(null);
 
+        System.out.println("run at here 4");
 //        Check user have seat
         Seat userHasSeat = Optional.ofNullable(user)
                 .flatMap(userEx -> seatRepository.findSeatByUserId(userEx.getId()))
@@ -99,28 +98,36 @@ public class SeatService {
         Optional.ofNullable(userHasSeat).ifPresent(seat -> {
             throw new RuntimeException("User have a seat");
         });
-
+        boolean isOccupied = user != null;
         Seat seat = Seat.builder().name(seatRequest.name)
                     .description(seatRequest.description)
                     .typeSeat(seatRequest.typeSeat != null ? Seat.TypeSeat.valueOf(seatRequest.typeSeat) : null)
                     .room(room)
                     .user(user)
+                .isOccupied(isOccupied)
                     .build();
-        return seatMapper.toSeatDTO(seatRepository.save(seat));
-    }
+        SeatDTO seatDTO =  seatMapper.toSeatDTO(seatRepository.save(seat));
+        webSocketService.sendCreateSeat(seat.room.getId(), seatDTO);
+//        webSocketService.sendNotice("Seat" + seat.getName() + " created at room " + seat.room.getName());
+        System.out.println("run at here 5");
+        return seatDTO;
 
+    }
+    public Page<SeatDTO> getSeatsWithPaginationAndFilter(int page, int size,  String roomId, String typeSeat, Boolean isOccupied) {
+        Pageable pageable =  PageRequest.of(page, size);
+        System.out.println("check room id ::: " + roomId);
+        System.out.println("check type seat ::: " + typeSeat);
+        Page<Seat> seatPage = seatRepository.findSeatsWithFilters(roomId, Seat.TypeSeat.valueOf(typeSeat), isOccupied, pageable);
+        return seatPage.map(seatMapper::toSeatDTO);
+    }
     public List<SeatDTO> getAll(){
         List<Seat> seats = seatRepository.findAll();
-        Seat seat = seats.get(0);
-
-        webSocketService.sendUpdatedSeat(seatMapper.toSeatDTO(seat));
-
         return seats.stream()
                 .map(seatMapper::toSeatDTO)
                 .collect(Collectors.toList());
     }
 
-    public SeatDTO updateSeat(String seatId,SeatRequest seatRequest) {
+    public SeatDTO updateSeat(String seatId,SeatRequest seatRequest) throws IOException {
         Seat seat = getSeatByIdDefault(seatId);
         boolean isPrivate = SecurityUtil.isPrivate(seat.getRoom().getChief() != null,seat.getRoom().getChief());
         if(!isPrivate) throw  new RuntimeException("Not permission to update seat of this room !");
@@ -136,16 +143,25 @@ public class SeatService {
         if(seatRequest.userId != null) {
             seat = updateUserSeat(seat,seatRequest.getUserId());
         }
+        SeatDTO seatDTO = seatMapper.toSeatDTO(seatRepository.save(seat));
+        Set<String> userSelect = new HashSet<>();
+        webSocketService.sendUpdateSeatInRoom(seat.room.getId(),seatDTO);
+        webSocketService.sendNotice("A Seat " + seat.getName() +  " updated  at room " + seat.room.getName());
+        ;
 
-        return seatMapper.toSeatDTO(seatRepository.save(seat));
+        return seatDTO;
     }
 
-    public SeatDTO deleteSeat(String seatId){
+    public SeatDTO deleteSeat(String seatId) throws IOException {
         Seat seat = getSeatByIdDefault(seatId);
         boolean isPrivate = SecurityUtil.isPrivate(seat.getRoom().getChief() != null,seat.getRoom().getChief());
         if(!isPrivate) throw  new RuntimeException("Not permission to delete seat of this room !");
         seatRepository.deleteById(seatId);
-        return seatMapper.toSeatDTO(seat);
+       SeatDTO seatDTO =  seatMapper.toSeatDTO(seat);
+        webSocketService.sendDeleteSeat(seat.room.getId(),seat.getId() );
+//        webSocketService.sendNotice("seat " + seat.getName() +  " delete  at room " + seat.room.getName());
+
+        return seatDTO;
     }
 
     public List<SeatDTO> getSeatOccupantByRoomId(String roomId){
@@ -167,12 +183,15 @@ public class SeatService {
     public SeatDTO assignSeat(AssignSeatRequest assignSeatRequest) {
         Seat seat = getSeatByIdDefault(assignSeatRequest.seatId);
         User user = userService.getUserById(assignSeatRequest.userId);
-        User getSeatByUserId = userService.getUserById(assignSeatRequest.userId);
-        if(getSeatByUserId != null) throw  new RuntimeException("User already assigned to this seat !");
+        Optional<User> getSeatByUserId = seatRepository.findUserBySeat(seat.getId());
+        if(getSeatByUserId.isPresent()) throw  new RuntimeException("User already assigned to this seat !");
         if(seat.getUser() != null) throw  new RuntimeException("Seat has already been assigned to this seat !");
         seat.setUser(user);
+        seat.isOccupied = true;
         seatRepository.save(seat);
-        return seatMapper.toSeatDTO(seat);
+        SeatDTO seatDTO = seatMapper.toSeatDTO(seat);
+        webSocketService.sendAssignSeat(seat.room.getId(),seatDTO);
+        return seatDTO;
     }
     public SeatDTO reassignSeat(ReassignSeatRequest reassignSeatRequest) {
         Seat seatNew = getSeatByIdDefault(reassignSeatRequest.newSeatId);
@@ -181,10 +200,31 @@ public class SeatService {
         if(!Objects.equals(seatOld.getUser().getId(), reassignSeatRequest.userId)) throw  new RuntimeException("this is not user's seat !");
         if(seatNew.getUser() != null) throw  new RuntimeException("User already assigned to this seat !");
         seatOld.setUser(null);
+        System.out.println("run at reassign seat");
         seatRepository.save(seatOld);
+        System.out.println("run at reassign seat end");
         seatNew.setUser(user);
+        System.out.println("run at reassign seat 2");
         seatRepository.save(seatNew);
-        return seatMapper.toSeatDTO(seatNew);
+        System.out.println("run at reassign seat end 2");
+        SeatDTO seatDTO = seatMapper.toSeatDTO(seatNew);
+        ReAssignSeatDTO reassignSeatDTO = new ReAssignSeatDTO();
+        reassignSeatDTO.setOldSeat(seatMapper.toSeatDTO(seatOld));
+        reassignSeatDTO.setNewSeat(seatMapper.toSeatDTO(seatNew));
+
+        webSocketService.sendReAssignSeatInRoom(seatNew.room.getId(),reassignSeatDTO);
+        return seatDTO;
+    }
+
+    public SeatDTO unAssign(String seatId) throws IOException {
+        Seat seat = getSeatByIdDefault(seatId);
+        if(seat.user == null)  throw  new RuntimeException("Seat hasn't assigned !");
+        seat.setUser(null);
+        seat.isOccupied = false;
+        seatRepository.save(seat);
+        SeatDTO seatDTO = seatMapper.toSeatDTO(seat);
+        webSocketService.sendUnAssignSeat(seat.room.getId(),seatDTO);
+        return seatDTO;
     }
 
     public SeatDTO setupTypeSeat(String seatId, SetupSeatRequest typeSeat){

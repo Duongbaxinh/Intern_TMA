@@ -13,6 +13,7 @@ public class UserRequest {
     String username;
     String roleName;
     String teamId;
+    String roomId;
     @Size(min = 8, message = "UNVALIDATED_PASS")
     @NotNull(message = "PASSWORD_NOT_NULL")
     String password;

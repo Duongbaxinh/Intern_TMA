@@ -29,6 +29,7 @@ public class User {
     String lastName;
     String username;
 
+    String roomId;
     @Size(min = 5)
     String password;
 

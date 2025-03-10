@@ -18,7 +18,7 @@ public class JwtService {
     @Value("${jwt.secretKey}")
     private String secretKey;
 
-    private static final long EXPIRATION_TIME = 3600;
+    private static final long EXPIRATION_TIME = 360000;
 
     public String generateToken(String username) throws JOSEException {
         Instant now = Instant.now();

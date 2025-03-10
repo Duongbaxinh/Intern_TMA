@@ -8,12 +8,13 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring",uses = {TeamMapper.class})
 public interface UserMapper {
     User toUser(UserRequest userRequest);
 
     @Mapping(target = "role",source = "role.name")
     @Mapping(target = "team",source = "team")
+    @Mapping(target = "roomId",source = "roomId")
     UserDTO toUserDTO(User user);
 }
 

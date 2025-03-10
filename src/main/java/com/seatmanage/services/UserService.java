@@ -45,7 +45,7 @@ public class UserService {
     public UserDTO addUser(UserRequest user) {
         User userEx = userRepository.findByUserName(user.getUsername()).orElse(null);
         if(userEx != null) throw new RuntimeException("user already exist");
-        System.out.println("run at 1" + user.getRoleName());
+        System.out.println("run at 1" + user.getRoomId());
         Role role = roleRepository.findRoleByName(SecurityUtil.RoleAuth.valueOf(user.getRoleName())).orElse(null);
 
         Team team =
@@ -65,6 +65,14 @@ public class UserService {
                                .collect(Collectors.toList());
            }
 
+    public List<UserDTO> getUsersInRoom(String roomId) {
+        System.out.println("Room ID nhận vào: '" + roomId + "'");
+        System.out.println("Độ dài roomId: " + roomId.length());
+        List<User>users = userRepository.getUserInRoom(roomId.trim());
+        System.out.println("checkkkk" + users.size());
+        return users.stream().map(userMapper::toUserDTO).collect(Collectors.toList());
+
+    }
     public UserDTO deleteUser(String userId) {
                 User user = userRepository.findById(userId).orElse(null);
                 if(user == null) throw  new RuntimeException("User not found");
@@ -74,12 +82,13 @@ public class UserService {
 
     public UserDTO updateUser(String userId, UserUpdateRequest userUpdateRequest) {
         User user = getUserById(userId);
-        boolean isPrivate = SecurityUtil.isPrivate(user);
-
-        if(!isPrivate) throw new RuntimeException("user is not allow");
+//        boolean isPrivate = SecurityUtil.isPrivate(user);
+//
+//        if(!isPrivate) throw new RuntimeException("user is not allow");
 
         Optional.ofNullable(userUpdateRequest.getFirstName()).ifPresent(user::setFirstName);
         Optional.ofNullable(userUpdateRequest.getLastName()).ifPresent(user::setLastName);
+        Optional.ofNullable(userUpdateRequest.getRoomId()).ifPresent(user::setRoomId);
 
         Optional.ofNullable(userUpdateRequest.getTeamId())
                 .map(teamId -> Optional.ofNullable(teamService.getTeamById(teamId)).orElseThrow(()-> new RuntimeException("team not found")))
