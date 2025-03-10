@@ -2,9 +2,12 @@ package com.seatmanage.controllers;
 
 import com.seatmanage.dto.request.RoomRequest;
 import com.seatmanage.dto.response.ApiResponse;
+import com.seatmanage.dto.response.RoomDTO;
+import com.seatmanage.dto.response.SeatDTO;
 import com.seatmanage.services.RoomService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -67,4 +70,14 @@ public class RoomController {
                 .result(roomService.deleteRoom(id)).build();
     }
 
+    @GetMapping("/filter")
+    public ApiResponse<Object> getSeats(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String hallId) {
+        Page<RoomDTO> rooms = roomService.getRoomsWithPaginationAndFilter(page,size,hallId);
+        return  ApiResponse.builder().code(200)
+                .msg("get room successfully")
+                .result(rooms).build();
+    }
 }

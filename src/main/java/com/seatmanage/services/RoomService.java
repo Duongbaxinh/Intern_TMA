@@ -12,6 +12,9 @@ import com.seatmanage.repositories.RoomRepository;
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -90,6 +93,7 @@ public class RoomService {
 
 
     }
+
     public RoomDTO updateRoom(String roomId, RoomRequest roomUpdate) {
         Room room = getRoomByIdDefault(roomId);
         User user = Optional.ofNullable(roomUpdate.userId).map(userService::getUserById).orElse(null);
@@ -116,4 +120,9 @@ public class RoomService {
         return hall;
     }
 
+    public Page<RoomDTO> getRoomsWithPaginationAndFilter(int page, int size,String hallId) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Room> rooms =  roomRepository.findRoomsWithFilters( hallId, pageable);
+        return  rooms.map(roomMapper::toRoomDTO);
+    }
 }
