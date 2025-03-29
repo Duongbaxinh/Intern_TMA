@@ -1,5 +1,6 @@
 package com.seatmanage.controllers;
 
+import com.cloudinary.api.exceptions.BadRequest;
 import com.seatmanage.dto.request.AssignSeatRequest;
 import com.seatmanage.dto.request.ReassignSeatRequest;
 import com.seatmanage.dto.request.SeatRequest;
@@ -30,7 +31,7 @@ public class SeatController {
 
     @PostMapping
     @PreAuthorize("hasAnyAuthority('ROLE_SUPERUSER','ROLE_LANDLORD')")
-    ApiResponse<Object> createSeat(@RequestBody @Valid SeatRequest seatRequest) throws IOException {
+    ApiResponse<Object> createSeat(@RequestBody @Valid SeatRequest seatRequest) throws IOException, BadRequest {
         System.out.println("run at " + seatRequest.toString());
         return ApiResponse.builder()
                 .code(200)
@@ -54,7 +55,7 @@ public class SeatController {
     }
 
     @GetMapping("/unassign/{seatId}")
-    ApiResponse<Object> unAssignSeat(@PathVariable String seatId) throws IOException {
+    ApiResponse<Object> unAssignSeat(@PathVariable String seatId) throws IOException, BadRequest {
         return ApiResponse.builder().code(200)
                 .msg("unassign seat by id: " + seatId)
                 .result(seatService.unAssign(seatId)).build();
@@ -82,7 +83,7 @@ public class SeatController {
 
     @PutMapping("{id}")
     @PreAuthorize("hasAnyAuthority('ROLE_SUPERUSER','ROLE_LANDLORD')")
-    ApiResponse<Object> updateSeatId(@PathVariable String id, @RequestBody SeatRequest seatRequest) throws IOException {
+    ApiResponse<Object> updateSeatId(@PathVariable String id, @RequestBody SeatRequest seatRequest) throws IOException, BadRequest {
         System.out.println("run updateHallById" + seatRequest.getName());
         return  ApiResponse.builder().code(200)
                 .msg("update hall with id " + id  +" successfully")
@@ -91,7 +92,7 @@ public class SeatController {
 
     @DeleteMapping("{id}")
     @PreAuthorize("hasAnyAuthority('ROLE_SUPERUSER','ROLE_LANDLORD')")
-    ApiResponse<Object> deleteSeatById(@PathVariable String id) throws IOException {
+    ApiResponse<Object> deleteSeatById(@PathVariable String id) throws IOException, BadRequest {
         return  ApiResponse.builder().code(200)
                 .msg("delete seat with id " +  id  +" successfully")
                 .result(seatService.deleteSeat(id)).build();
@@ -118,7 +119,7 @@ public class SeatController {
 
     @PutMapping("/assign")
     @PreAuthorize("hasAnyAuthority('ROLE_SUPERUSER','ROLE_LANDLORD')")
-    ApiResponse<Object> assignSeat( @RequestBody AssignSeatRequest assignSeatRequest) {
+    ApiResponse<Object> assignSeat( @RequestBody AssignSeatRequest assignSeatRequest) throws BadRequest {
         return   ApiResponse.builder().code(200)
                 .msg("assign seat successfully")
                 .result(seatService.assignSeat(assignSeatRequest))
@@ -126,7 +127,7 @@ public class SeatController {
     }
     @PutMapping("/reassign")
     @PreAuthorize("hasAnyAuthority('ROLE_SUPERUSER','ROLE_LANDLORD')")
-    ApiResponse<Object> reassignSeat( @RequestBody ReassignSeatRequest reassignSeatRequest) {
+    ApiResponse<Object> reassignSeat( @RequestBody ReassignSeatRequest reassignSeatRequest) throws BadRequest {
         return ApiResponse.builder().code(200)
                 .msg("reassign seat successfully")
                 .result(seatService.reassignSeat(reassignSeatRequest))

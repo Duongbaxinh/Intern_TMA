@@ -1,5 +1,13 @@
 
 spring:
+  web:
+    resources:
+      static-locations: file:./uploads/
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 10MB
+      max-request-size: 20MB
   datasource:
     url: jdbc:mysql://localhost:3306/seat
     username: root
@@ -9,6 +17,11 @@ spring:
     hibernate:
       ddl-auto: update
     database-platform: org.hibernate.dialect.MySQLDialect
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
 jwt:
   secretKey: tPqj5U7htMmW17TW0xwFfK123cVSd3fWVaEq3kiFhJZ/PS4N98MlxjsHi+tSevnMpM+bggCSJ9XctVKoc+S3vw==
 
@@ -16,3 +29,10 @@ logging:
   level:
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+
+cloud:
+  cloudinary:
+    cloud-name: dwu92ycra
+    api-key: 966841335387149
+    api-secret: U6SxatcQP5_U_K_46mbQeb9LyKM
+

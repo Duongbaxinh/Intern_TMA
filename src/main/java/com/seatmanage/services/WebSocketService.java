@@ -1,9 +1,11 @@
 package com.seatmanage.services;
 
+import com.cloudinary.api.exceptions.BadRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.seatmanage.config.SecurityUtil;
 import com.seatmanage.dto.response.ReAssignSeatDTO;
 import com.seatmanage.dto.response.SeatDTO;
-import com.seatmanage.dto.response.UserDTO;
+import com.seatmanage.dto.response.UserPrivateDTO;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
@@ -18,108 +20,108 @@ import java.util.concurrent.ConcurrentHashMap;
 @Component
 public class WebSocketService extends TextWebSocketHandler {
     private final Map<String, Set<WebSocketSession>> sessionRooms = new ConcurrentHashMap<>();
+    private final Map<String, Set<WebSocketSession>> userRoles = new ConcurrentHashMap<>();
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage request) throws Exception {
-        String data = request.getPayload();
-        Map<String, String> payload = objectMapper.readValue(data, Map.class);
+        Map<String, String> payload = objectMapper.readValue(request.getPayload(), Map.class);
         String type = payload.get("type");
+        String username = payload.get("username");
+        String role = payload.get("role");
         String roomId = payload.get("value");
-
-        sessionRooms.putIfAbsent(roomId, ConcurrentHashMap.newKeySet());
-        sessionRooms.get(roomId).add(session);
-//        this.sendMessage(roomId,"Client " + session.getId() + " join room: " + roomId);
-//        session.sendMessage(new TextMessage(request.toString()));
-    }
-
-    @Override
-    public void afterConnectionEstablished(WebSocketSession session) throws Exception {
-        System.out.println("🔹 WebSocket connect successful: " + session.getId());
-        sessionRooms.putIfAbsent("all", ConcurrentHashMap.newKeySet());
-        sessionRooms.get("all").add(session);
-//        sendMessageToAll("notice",Map.of("notice","join all"));
-    }
-
-    @Override
-    public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
-        System.out.println(" WebSocket đóng: " + session.getId());
-
-        sessionRooms.forEach((roomId, sessions) -> {
-            if (sessions.remove(session)) {
-                if (sessions.isEmpty()) {
-                    sessionRooms.remove(roomId);
-                }
-            }
-        });
-
-    }
-
-    public  void sendMessage(String roomId,String message) throws IOException {
-            sendMessageToRoom(roomId,"message",Map.of("message",message));
-    }
-    public  void sendNotice(String notice) throws IOException {
-        sendMessageToAll("notice",Map.of("notice",notice));
-    }
-    public void sendUpdateSeatInRoom(String roomId, SeatDTO seat) {
-        sendMessageToRoom(roomId, "seatUpdate", seat);
-    }
-
-    public void sendUpdateSeatAll(SeatDTO seat) {
-        sendMessageToAll("seatUpdate", seat);
-    }
-
-    public void sendCreateSeat(String roomId, SeatDTO seat) {
-        sendMessageToRoom( roomId,"seatCreate", seat);
-    }
-
-    public void sendDeleteSeat(String roomId, String seatId) {
-        sendMessageToRoom(roomId, "seatDelete", Map.of("seatId", seatId));
-    }
-
-    public void sendAssignSeat(String roomId, SeatDTO seat) {
-        sendMessageToRoom(roomId, "assignSeat", seat);
-    }
-    public void sendReAssignSeatInRoom(String roomId, ReAssignSeatDTO seat) {
-        sendMessageToRoom(roomId, "reassignSeat", seat);
-    }
-    public void sendUnAssignSeat(String roomId, SeatDTO seat) {
-        sendMessageToRoom(roomId, "unAssignSeat", seat);
-    }
-
-    private void sendMessageToRoom(String roomId, String type, Object data) {
-        Set<WebSocketSession> sessions = sessionRooms.get(roomId);
-        System.out.println("send roomId: " + sessions  );
-        if (sessions == null || sessions.isEmpty()) {
-            return;
+System.out.println("type: " + type + " username: " + username + " role: " + role + " roomId: " + roomId);
+        if ("auth".equals(type) && username != null ) {
+            session.getAttributes().put("username", username);
+            session.getAttributes().put("role", role);
+            userRoles.computeIfAbsent(role, k -> ConcurrentHashMap.newKeySet()).add(session);
+        } else if (roomId != null) {
+            sessionRooms.computeIfAbsent(roomId, k -> ConcurrentHashMap.newKeySet()).add(session);
         }
+        System.out.println("get role user: " + userRoles);
+    }
+
+    @Override
+    public void afterConnectionEstablished(WebSocketSession session) {
+        System.out.println("🔹 WebSocket connected: " + session.getId());
+        sessionRooms.computeIfAbsent("all", k -> ConcurrentHashMap.newKeySet()).add(session);
+    }
+
+    @Override
+    public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
+        System.out.println("🔸 WebSocket closed: " + session.getId());
+        sessionRooms.values().forEach(sessions -> sessions.remove(session));
+        userRoles.values().forEach(sessions -> sessions.remove(session));
+    }
+
+    public void sendNoticeToRoom(String roomId,String type, String message) throws IOException, BadRequest {
+                 sendToSessionsNotice(sessionRooms.get(roomId), type, roomId, Map.of("message", message));
+    }
+
+    public void sendNotice(String notice) throws IOException, BadRequest {
+        sendToAll("notice", Map.of("notice", notice));
+    }
+
+    public void sendSeatUpdate(String roomId, SeatDTO seat) throws BadRequest {
+        sendToRoom(roomId, "seatUpdate", seat);
+    }
+
+    public void sendSeatAction(String roomId, String action, SeatDTO seat) throws BadRequest {
+        sendToRoom(roomId, action, seat);
+    }
+
+    public void sendReAssignSeat(String roomId, ReAssignSeatDTO seat) throws BadRequest {
+        sendToRoom(roomId, "reassignSeat", seat);
+    }
+
+    public void sendToRole(String role, String type, Object data) throws BadRequest {
+        System.out.println("sendToRole: " + userRoles.get(role));
+        sendToSessionsNotice(userRoles.get(role), type, role, data);
+    }
+
+    public void sendToRoom(String roomId, String type, Object data) throws BadRequest {
+        sendToSessions(sessionRooms.get(roomId), type, roomId, data);
+    }
+
+    public void sendWithRole(String role, String type, Object data) throws BadRequest {
+        System.out.println("sendWithRole rrrrrrrrrr: " + userRoles.get(role));
+        sendToSessionsNotice(userRoles.get(role), type, role, data);
+        System.out.println("sendWithRole:222 " + role + " " + type + " " + data);
+    }
+
+    private void sendToAll(String type, Object data) throws BadRequest {
+        sendToSessions(sessionRooms.get("all"), type, "all", data);
+    }
+
+    private void sendToSessionsNotice(Set<WebSocketSession> sessions, String type, String target, Object data) throws BadRequest {
+        if (sessions == null || sessions.isEmpty()) return;
+        UserPrivateDTO userPrivateDTO = SecurityUtil.getUserPrincipal();
+        if (userPrivateDTO == null) throw new BadRequest("UnAuthenticated");
+
+        String username = userPrivateDTO.getUsername();
         try {
-            String jsonMessage = objectMapper.writeValueAsString(Map.of("type", type, "value", roomId, "data", data));
-            for (WebSocketSession session : sessions) {
-                if (session.isOpen()) {
-                    session.sendMessage(new TextMessage(jsonMessage));
-                }
+            String jsonMessage = objectMapper.writeValueAsString(Map.of("type", type, "value", target, "data", data));
+            for (WebSocketSession session : sessions  ) {
+                if (session.isOpen() && !username.equals(session.getAttributes().get("username")))  session.sendMessage(new TextMessage(jsonMessage));
             }
         } catch (IOException e) {
-            System.err.println( e.getMessage());
+            System.err.println("Error sending message: " + e.getMessage());
         }
     }
 
-    private void sendMessageToAll(String type, Object data) {
+    private void sendToSessions(Set<WebSocketSession> sessions, String type, String target, Object data) throws BadRequest {
+        if (sessions == null || sessions.isEmpty()) return;
+        UserPrivateDTO userPrivateDTO = SecurityUtil.getUserPrincipal();
+        if (userPrivateDTO == null) throw new BadRequest("UnAuthenticated");
+
+        String username = userPrivateDTO.getUsername();
         try {
-            Set<WebSocketSession> sessions = sessionRooms.get("all");
-            if (sessions == null || sessions.isEmpty()) {return;}
-
-            String jsonMessage = objectMapper.writeValueAsString(Map.of("type", type, "data", data));
-
-            for (WebSocketSession session : sessions) {
-                if (session.isOpen()) {
-                    session.sendMessage(new TextMessage(jsonMessage));
-
-                }
+            String jsonMessage = objectMapper.writeValueAsString(Map.of("type", type, "value", target, "data", data));
+            for (WebSocketSession session : sessions  ) {
+                if (session.isOpen())  session.sendMessage(new TextMessage(jsonMessage));
             }
-                 } catch (IOException e) {
-            System.err.println( e.getMessage());
+        } catch (IOException e) {
+            System.err.println("Error sending message: " + e.getMessage());
         }
     }
 }

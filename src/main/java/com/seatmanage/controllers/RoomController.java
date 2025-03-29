@@ -1,18 +1,24 @@
 package com.seatmanage.controllers;
 
+import com.cloudinary.Api;
+import com.cloudinary.api.exceptions.BadRequest;
 import com.seatmanage.dto.request.RoomRequest;
 import com.seatmanage.dto.request.SaveDiagram;
+import com.seatmanage.dto.request.SeatDiagramUpdate;
 import com.seatmanage.dto.response.ApiResponse;
 import com.seatmanage.dto.response.RoomDTO;
 import com.seatmanage.dto.response.SeatDTO;
 import com.seatmanage.services.RoomService;
 import jakarta.validation.Valid;
+import jakarta.websocket.server.PathParam;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.List;
 
 @RestController
 @RequestMapping("/room")
@@ -42,7 +48,7 @@ public class RoomController {
     }
 
     @GetMapping("/users/{roomId}")
-    @PreAuthorize("hasRole('ROLE_SUPERUSER')")
+//    @PreAuthorize("hasRole('ROLE_SUPERUSER')")
     ApiResponse<Object> getUserInRoom(@PathVariable String roomId) {
         return ApiResponse.builder().code(200).msg("get user in room").result(roomService.getUserInRoom(roomId)).build();
     }
@@ -89,10 +95,36 @@ public class RoomController {
                 .msg("get room successfully")
                 .result(rooms).build();
     }
-    @PostMapping("/diagram")
-    public  ApiResponse<Object> createDiagramRoom(@RequestBody SaveDiagram saveDiagram) throws IOException {
+    @GetMapping(value = "/diagram/approving/{roomId}")
+    @PreAuthorize("hasRole('ROLE_SUPERUSER')")
+    public  ApiResponse<Object> approvingDiagram(@PathVariable String roomId) throws IOException, BadRequest {
         return ApiResponse.builder().code(200)
-                .msg("get room by id: ")
-                .result(roomService.saveDiagramRoom(saveDiagram)).build();
+                .msg("save diagram successfully ")
+                .result(roomService.approvingDiagram(roomId)).build();
     }
+
+    @GetMapping(value = "/diagram/rejecting/{roomId}")
+    @PreAuthorize("hasRole('ROLE_SUPERUSER')")
+    public  ApiResponse<Object> rejectDiagram(@PathVariable String roomId) throws IOException, BadRequest {
+        return ApiResponse.builder().code(200)
+                .msg("save diagram successfully ")
+                .result(roomService.rejectingDiagram(roomId)).build();
+    }
+
+    @PostMapping(value = "/save/diagram",consumes = "multipart/form-data")
+    public ApiResponse<Object> SaveDiagram(@ModelAttribute SaveDiagram saveDiagram) throws IOException {
+        return ApiResponse.builder().code(200)
+                .msg("save diagram successfully ")
+                .result(roomService.saveDiagram(saveDiagram)).build();
+    }
+    @GetMapping("/view/{roomId}")
+    @PreAuthorize("hasAnyRole('ROLE_SUPERUSER','ROLE_LANDLORD','USER')")
+    public ApiResponse<Object> getRoomView( @PathVariable String roomId) {
+        return ApiResponse.builder().code(200)
+                .msg("get room view successfully ")
+                .result(roomService.getRoomById(roomId)).build();
+    }
+
+
+
 }

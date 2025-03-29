@@ -40,7 +40,11 @@ public class SecurityUtil {
         }
         return true;
     }
-
+    public static boolean isSupperUser(){
+        UserPrivateDTO userPrivateDTO = getUserPrincipal();
+        assert userPrivateDTO != null;// throw error
+        return userPrivateDTO.getPermissions().contains("ROLE_SUPERUSER");
+    }
     public static UserPrivateDTO getUserPrincipal(){
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated()){
@@ -51,6 +55,6 @@ public class SecurityUtil {
                         .map(GrantedAuthority::getAuthority)
                         .collect(Collectors.toList());
         return  UserPrivateDTO.builder().username(authentication.getName())
-                .permissions(authorities).build();
+                            .permissions(authorities).build();
     }
 }

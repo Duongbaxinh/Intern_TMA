@@ -54,9 +54,10 @@ public class ConfigSecurity {
                         .frameOptions(HeadersConfigurer.FrameOptionsConfig::disable)
                 )
                 .authorizeHttpRequests(auth -> auth
-//                        .requestMatchers("/ws/**").permitAll()
-//                        .requestMatchers( "/api/websocket/**","/auth/login","auth/register").permitAll()
-                        .anyRequest().permitAll()
+                        .requestMatchers("/ws/**").permitAll()
+                        .requestMatchers("/uploads/**").permitAll()
+                        .requestMatchers( "/api/websocket/**","/auth/login","auth/register").permitAll()
+                        .anyRequest().authenticated()
                 );
 
         http.oauth2ResourceServer(oauth2 -> oauth2.jwt( jwtConfigurer -> jwtConfigurer.decoder(jwtDecoder()).jwtAuthenticationConverter(customAuthenticationConvert)

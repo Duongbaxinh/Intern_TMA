@@ -24,18 +24,16 @@ public class AuthService {
            }
 
     public AuthDTO authenticate(AuthRequest authRequest) throws JOSEException {
-        System.out.println("run at ");
                User user = userRepository.findByUserName(authRequest.getUsername())
                                    .orElseThrow(()-> new AppExceptionHandle(ErrorCode.NOT_FOUND_USER));
-        System.out.println("run at here 0");
                boolean authenticated = passwordEncoder.matches(authRequest.getPassword(), user.getPassword());
 
-                       if (!authenticated) throw new RuntimeException("user name or password is not correct");
-        System.out.println("run at here 1");
+               if (!authenticated) throw new RuntimeException("user name or password is not correct");
                String accessToken = jwtService.generateToken(authRequest.getUsername());
-               System.out.println("run at here 2");
                return  AuthDTO.builder().id(user.getId())
                                .username(user.getUsername())
+                               .room(String.valueOf(user.getRoomId()))
+                               .role(String.valueOf(user.getRole().getName()))
                                .accessToken(accessToken)
                                .build();
            }

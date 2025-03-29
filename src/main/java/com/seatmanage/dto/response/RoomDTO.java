@@ -18,9 +18,11 @@ public class RoomDTO {
     String id;
     String name;
     String description;
-    String hallId;
+    String hall;
+    String floor;
     UserDTO chief;
     String object;
+    String image;
     int capacity;
     List<SeatDTO> seats;
 }
