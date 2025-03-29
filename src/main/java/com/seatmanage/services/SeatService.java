@@ -1,4 +1,5 @@
 package com.seatmanage.services;
+import com.cloudinary.api.exceptions.BadRequest;
 import com.seatmanage.config.SecurityUtil;
 import com.seatmanage.dto.request.AssignSeatRequest;
 import com.seatmanage.dto.request.ReassignSeatRequest;
@@ -69,7 +70,7 @@ public class SeatService {
         return  seat;
     }
 
-    public SeatDTO createSeat(SeatRequest seatRequest) throws IOException {
+    public SeatDTO createSeat(SeatRequest seatRequest) throws IOException, BadRequest {
 
 //      Check room existed
         Room room = roomService.getRoomByIdDefault(seatRequest.roomId);
@@ -107,9 +108,7 @@ public class SeatService {
                 .isOccupied(isOccupied)
                     .build();
         SeatDTO seatDTO =  seatMapper.toSeatDTO(seatRepository.save(seat));
-        webSocketService.sendCreateSeat(seat.room.getId(), seatDTO);
-//        webSocketService.sendNotice("Seat" + seat.getName() + " created at room " + seat.room.getName());
-        System.out.println("run at here 5");
+        webSocketService.sendSeatAction(seat.room.getId(),"createSeat", seatDTO);
         return seatDTO;
 
     }
@@ -127,7 +126,7 @@ public class SeatService {
                 .collect(Collectors.toList());
     }
 
-    public SeatDTO updateSeat(String seatId,SeatRequest seatRequest) throws IOException {
+    public SeatDTO updateSeat(String seatId,SeatRequest seatRequest) throws IOException, BadRequest {
         Seat seat = getSeatByIdDefault(seatId);
         boolean isPrivate = SecurityUtil.isPrivate(seat.getRoom().getChief() != null,seat.getRoom().getChief());
         if(!isPrivate) throw  new RuntimeException("Not permission to update seat of this room !");
@@ -145,22 +144,20 @@ public class SeatService {
         }
         SeatDTO seatDTO = seatMapper.toSeatDTO(seatRepository.save(seat));
         Set<String> userSelect = new HashSet<>();
-        webSocketService.sendUpdateSeatInRoom(seat.room.getId(),seatDTO);
+        webSocketService.sendSeatUpdate(seat.room.getId(),seatDTO);
         webSocketService.sendNotice("A Seat " + seat.getName() +  " updated  at room " + seat.room.getName());
         ;
 
         return seatDTO;
     }
 
-    public SeatDTO deleteSeat(String seatId) throws IOException {
+    public SeatDTO deleteSeat(String seatId) throws IOException, BadRequest {
         Seat seat = getSeatByIdDefault(seatId);
         boolean isPrivate = SecurityUtil.isPrivate(seat.getRoom().getChief() != null,seat.getRoom().getChief());
         if(!isPrivate) throw  new RuntimeException("Not permission to delete seat of this room !");
         seatRepository.deleteById(seatId);
        SeatDTO seatDTO =  seatMapper.toSeatDTO(seat);
-        webSocketService.sendDeleteSeat(seat.room.getId(),seat.getId() );
-//        webSocketService.sendNotice("seat " + seat.getName() +  " delete  at room " + seat.room.getName());
-
+        webSocketService.sendSeatAction(seat.room.getId(),"deleteSeat", seatDTO );
         return seatDTO;
     }
 
@@ -180,7 +177,7 @@ public class SeatService {
         return seatRepository.findSeatByRoomId(roomId).stream().map(seatMapper::toSeatDTO).collect(Collectors.toList());
     }
 
-    public SeatDTO assignSeat(AssignSeatRequest assignSeatRequest) {
+    public SeatDTO assignSeat(AssignSeatRequest assignSeatRequest) throws BadRequest {
         Seat seat = getSeatByIdDefault(assignSeatRequest.seatId);
         User user = userService.getUserById(assignSeatRequest.userId);
         Optional<User> getSeatByUserId = seatRepository.findUserBySeat(seat.getId());
@@ -190,40 +187,37 @@ public class SeatService {
         seat.isOccupied = true;
         seatRepository.save(seat);
         SeatDTO seatDTO = seatMapper.toSeatDTO(seat);
-        webSocketService.sendAssignSeat(seat.room.getId(),seatDTO);
+        webSocketService.sendToRoom(seat.room.getId(),"assignSeat", seatDTO);
         return seatDTO;
     }
-    public SeatDTO reassignSeat(ReassignSeatRequest reassignSeatRequest) {
+    public SeatDTO reassignSeat(ReassignSeatRequest reassignSeatRequest) throws BadRequest {
         Seat seatNew = getSeatByIdDefault(reassignSeatRequest.newSeatId);
         Seat seatOld = getSeatByIdDefault(reassignSeatRequest.oldSeatId);
         User user = userService.getUserById(reassignSeatRequest.userId);
         if(!Objects.equals(seatOld.getUser().getId(), reassignSeatRequest.userId)) throw  new RuntimeException("this is not user's seat !");
         if(seatNew.getUser() != null) throw  new RuntimeException("User already assigned to this seat !");
         seatOld.setUser(null);
-        System.out.println("run at reassign seat");
+        seatOld.setIsOccupied(false);
         seatRepository.save(seatOld);
-        System.out.println("run at reassign seat end");
         seatNew.setUser(user);
-        System.out.println("run at reassign seat 2");
+        seatNew.setIsOccupied(true);
         seatRepository.save(seatNew);
-        System.out.println("run at reassign seat end 2");
         SeatDTO seatDTO = seatMapper.toSeatDTO(seatNew);
         ReAssignSeatDTO reassignSeatDTO = new ReAssignSeatDTO();
         reassignSeatDTO.setOldSeat(seatMapper.toSeatDTO(seatOld));
         reassignSeatDTO.setNewSeat(seatMapper.toSeatDTO(seatNew));
-
-        webSocketService.sendReAssignSeatInRoom(seatNew.room.getId(),reassignSeatDTO);
+        webSocketService.sendReAssignSeat(seatNew.room.getId(),reassignSeatDTO);
         return seatDTO;
     }
 
-    public SeatDTO unAssign(String seatId) throws IOException {
+    public SeatDTO unAssign(String seatId) throws IOException, BadRequest {
         Seat seat = getSeatByIdDefault(seatId);
         if(seat.user == null)  throw  new RuntimeException("Seat hasn't assigned !");
         seat.setUser(null);
         seat.isOccupied = false;
         seatRepository.save(seat);
         SeatDTO seatDTO = seatMapper.toSeatDTO(seat);
-        webSocketService.sendUnAssignSeat(seat.room.getId(),seatDTO);
+        webSocketService.sendSeatAction(seat.room.getId(),"unAssignSeat", seatDTO);
         return seatDTO;
     }
 

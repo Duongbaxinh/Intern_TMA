@@ -25,8 +25,8 @@ import java.util.stream.Collectors;
 public class UserService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
-   private final PasswordEncoder passwordEncoder;
-   private final RoleService roleService;
+    private final PasswordEncoder passwordEncoder;
+    private final RoleService roleService;
     private final RoleRepository roleRepository;
     private final TeamService teamService;
     private final TeamRepository teamRepository;
@@ -66,10 +66,7 @@ public class UserService {
            }
 
     public List<UserDTO> getUsersInRoom(String roomId) {
-        System.out.println("Room ID nhận vào: '" + roomId + "'");
-        System.out.println("Độ dài roomId: " + roomId.length());
         List<User>users = userRepository.getUserInRoom(roomId.trim());
-        System.out.println("checkkkk" + users.size());
         return users.stream().map(userMapper::toUserDTO).collect(Collectors.toList());
 
     }
@@ -82,10 +79,6 @@ public class UserService {
 
     public UserDTO updateUser(String userId, UserUpdateRequest userUpdateRequest) {
         User user = getUserById(userId);
-//        boolean isPrivate = SecurityUtil.isPrivate(user);
-//
-//        if(!isPrivate) throw new RuntimeException("user is not allow");
-
         Optional.ofNullable(userUpdateRequest.getFirstName()).ifPresent(user::setFirstName);
         Optional.ofNullable(userUpdateRequest.getLastName()).ifPresent(user::setLastName);
         Optional.ofNullable(userUpdateRequest.getRoomId()).ifPresent(user::setRoomId);

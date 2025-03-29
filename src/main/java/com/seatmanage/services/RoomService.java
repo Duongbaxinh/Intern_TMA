@@ -1,11 +1,13 @@
 package com.seatmanage.services;
 
+import com.cloudinary.api.exceptions.BadRequest;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.seatmanage.config.SecurityUtil;
-import com.seatmanage.dto.request.RoomRequest;
-import com.seatmanage.dto.request.SaveDiagram;
-import com.seatmanage.dto.request.SeatRequest;
+import com.seatmanage.dto.request.*;
 import com.seatmanage.dto.response.RoomDTO;
 import com.seatmanage.dto.response.UserDTO;
+import com.seatmanage.dto.response.UserPrivateDTO;
 import com.seatmanage.entities.Hall;
 import com.seatmanage.entities.Room;
 import com.seatmanage.entities.Seat;
@@ -14,6 +16,7 @@ import com.seatmanage.mappers.RoomMapper;
 import com.seatmanage.repositories.RoomRepository;
 import com.seatmanage.repositories.SeatRepository;
 import lombok.AccessLevel;
+import lombok.SneakyThrows;
 import lombok.experimental.FieldDefaults;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -36,21 +39,27 @@ public class RoomService {
     private final UserService userService;
     private final SeatRepository seatRepository;
     private final WebSocketService webSocketService;
+    private final CloudinaryService cloudinaryService;
+    private final ObjectMapper objectMapper;
+    private final RedisService redisService;
 
-    public RoomService(RoomRepository roomRepository, HallService hallService, RoomMapper roomMapper, UserService userService, SeatRepository seatRepository, WebSocketService webSocketService) {
+    public RoomService(RoomRepository roomRepository, HallService hallService, RoomMapper roomMapper, UserService userService, SeatRepository seatRepository, WebSocketService webSocketService, CloudinaryService cloudinaryService, CloudinaryService cloudinaryService1, ObjectMapper objectMapper, RedisService redisService) {
         this.roomRepository = roomRepository;
         this.hallService = hallService;
         this.roomMapper = roomMapper;
         this.userService = userService;
         this.seatRepository = seatRepository;
         this.webSocketService = webSocketService;
+        this.cloudinaryService = cloudinaryService1;
+        this.objectMapper = objectMapper;
+        this.redisService = redisService;
     }
 
 
     public RoomDTO getRoomById(String roomId) {
         Room room = roomRepository.findById(roomId).orElseThrow(()-> new RuntimeException("Hall not found"));
-        boolean isPrivate =  SecurityUtil.isPrivate(room.chief!= null, room.chief);
-        if(!isPrivate) throw new RuntimeException("Not permission to access room");
+//        boolean isPrivate =  SecurityUtil.isPrivate(room.chief!= null, room.chief);
+//        if(!isPrivate) throw new RuntimeException("Not permission to access room");
         return roomMapper.toRoomDTO(room);
     }
 
@@ -59,19 +68,15 @@ public class RoomService {
     }
 
     public List<UserDTO> getUserInRoom(String roomId) {
-        System.out.println("run at her 1");
-        List<UserDTO> users =  userService.getUsersInRoom(roomId);
-        System.out.println("run at her 2.1" + roomId);
-        List<String> userIds = seatRepository.getUserAssignByRoomId(roomId);
+                List<UserDTO> users =  userService.getUsersInRoom(roomId);
+                List<String> userIds = seatRepository.getUserAssignByRoomId(roomId);
         List<UserDTO> userResponse = new ArrayList<>();
         users.forEach(user -> {
-            System.out.println("run at her 2" + user.toString());
-            if(!userIds.contains(user.id)) {
+                        if(!userIds.contains(user.id)) {
                 userResponse.add(user);
             }
         });
-                System.out.println("run at here" + userIds);
-        return userResponse;
+                        return userResponse;
     }
 
 
@@ -137,11 +142,11 @@ public class RoomService {
         return roomMapper.toRoomDTO(roomRepository.save(room));
     }
 
-    public RoomDTO deleteRoom(String hallId){
-        RoomDTO hall = getRoomById(hallId);
-        if(hall == null) throw new RuntimeException("Hall Not Found");
-        roomRepository.deleteById(hallId);
-        return hall;
+    public RoomDTO deleteRoom(String roomId){
+        RoomDTO room = getRoomById(roomId);
+        if(room == null) throw new RuntimeException("room Not Found");
+        roomRepository.deleteById(roomId);
+        return room;
     }
 
     public Page<RoomDTO> getRoomsWithPaginationAndFilter(int page, int size,String hallId) {
@@ -150,19 +155,56 @@ public class RoomService {
         return  rooms.map(roomMapper::toRoomDTO);
     }
 
-    public String saveDiagramRoom(SaveDiagram diagram) throws IOException {
-        Room room = getRoomByIdDefault(diagram.roomId);
-        diagram.seats.forEach(seat -> {
+    public String saveDiagramRoom(String roomId) throws IOException, BadRequest {
+        Room room = getRoomByIdDefault(roomId);
+        DiagramDraft diagramDraft = this.getDiagramById(roomId);
+        List<SeatDiagramUpdate> seats = diagramDraft.getSeats();
+
+        seats.forEach(seat -> {
             Seat seat1 = seatRepository.findById(seat.seatId).orElse(null);
             if(seat1 == null) throw new RuntimeException("Seat Not Found");
             seat1.posX = seat.posX;
             seat1.posY = seat.posY;
             seatRepository.save(seat1);
         });
+        room.setImage(diagramDraft.getImage());
+        room.object = diagramDraft.object;
+        roomRepository.save(room);
+        webSocketService.sendToRole("SUPERUSER","diagram", diagramDraft);
+        webSocketService.sendNoticeToRoom(room.getId(),"Layout Room " + room.name + " has been updated");
+        return  "save diagram";
+    }
 
-        room.object = diagram.object;
-       roomRepository.save(room);
-        webSocketService.sendNotice("Room " + room.name +  " updated  at room ");
-return  "save diagram";
+    @SneakyThrows
+    public void saveDiagramDraft(SaveDiagram saveDiagram) {
+        Room room = getRoomByIdDefault(saveDiagram.roomId);
+        List<SeatDiagramUpdate> seats = objectMapper.readValue(saveDiagram.seats,
+                objectMapper.getTypeFactory().constructCollectionType(List.class, SeatDiagramUpdate.class));
+                        DiagramDraft object = new DiagramDraft();
+        String url = Optional.ofNullable(saveDiagram.getImage())
+                .map(image -> {
+                    try {
+                        return cloudinaryService.uploadImage(image);
+                    } catch (IOException e) {
+                        return null;
+                    }
+                })
+                .orElse(null);
+
+                object.setImage(url);
+                object.setSeats(seats);
+                object.setObject(saveDiagram.object);
+                object.setRoomId(saveDiagram.roomId);
+                object.setDraft(true);
+                redisService.setValue(saveDiagram.roomId, object);
+
+                webSocketService.sendToRole("SUPERUSER","diagram", object);
+    }
+
+    public void deleteDiagramDraft(String roomId){
+        redisService.deleteValueByKey("room");
+    }
+    public DiagramDraft getDiagramById(String roomId){
+       return objectMapper.convertValue( redisService.getValueByKey(roomId),DiagramDraft.class);
     }
 }
