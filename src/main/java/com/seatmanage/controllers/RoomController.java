@@ -118,12 +118,18 @@ public class RoomController {
                 .result(roomService.saveDiagram(saveDiagram)).build();
     }
 
-    @GetMapping("/view/{roomId}")
+    @GetMapping("/view")
     @PreAuthorize("hasAnyRole('ROLE_SUPERUSER','ROLE_LANDLORD','USER')")
-    public ApiResponse<Object> getRoomView( @PathVariable String roomId) {
+    public ApiResponse<Object> getRoomView(
+            @RequestParam("roomId") String roomId,
+            @RequestParam(defaultValue = "0") int pageNumber,
+            @RequestParam(defaultValue = "10") int pageSize,
+            @RequestParam(defaultValue = "TEMPORARY") String typeSeat,
+            @RequestParam(required = false) boolean isOccupied
+    ) {
         return ApiResponse.builder().code(200)
                 .msg("get room view successfully ")
-                .result(roomService.getRoomById(roomId)).build();
+                .result(roomService.getViewRoom(roomId,pageNumber,pageSize, String.valueOf(typeSeat),isOccupied)).build();
     }
 
 }

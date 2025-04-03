@@ -3,24 +3,35 @@ package com.seatmanage.services;
 import com.cloudinary.api.exceptions.BadRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.seatmanage.config.SecurityUtil;
-import com.seatmanage.dto.request.*;
+import com.seatmanage.dto.request.DiagramDraft;
+import com.seatmanage.dto.request.RoomRequest;
+import com.seatmanage.dto.request.SaveDiagram;
+import com.seatmanage.dto.request.SeatDiagramUpdate;
 import com.seatmanage.dto.response.RoomDTO;
 import com.seatmanage.dto.response.SeatDTO;
 import com.seatmanage.dto.response.UserDTO;
-import com.seatmanage.entities.*;
+import com.seatmanage.entities.Hall;
+import com.seatmanage.entities.Room;
+import com.seatmanage.entities.Seat;
+import com.seatmanage.entities.User;
 import com.seatmanage.mappers.DiagramMapper;
 import com.seatmanage.mappers.RoomMapper;
+import com.seatmanage.mappers.SeatMapper;
 import com.seatmanage.repositories.RoomRepository;
 import com.seatmanage.repositories.SeatRepository;
 import com.seatmanage.repositories.UserRepository;
 import lombok.AccessLevel;
 import lombok.SneakyThrows;
 import lombok.experimental.FieldDefaults;
-import org.springframework.data.domain.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -38,11 +49,11 @@ public class RoomService {
     private final RedisService redisService;
     private final DiagramMapper diagramMapper;
     private final UserRepository userRepository;
+    private final SeatMapper seatMapper;
 
     public RoomService(RoomRepository roomRepository, HallService hallService, RoomMapper roomMapper,
-                       UserService userService, SeatRepository seatRepository, WebSocketService webSocketService,
-                       CloudinaryService cloudinaryService, CloudinaryService cloudinaryService1,
-                       ObjectMapper objectMapper, RedisService redisService, DiagramMapper diagramMapper, UserRepository userRepository) {
+                       UserService userService, SeatRepository seatRepository, WebSocketService webSocketService, CloudinaryService cloudinaryService1,
+                       ObjectMapper objectMapper, RedisService redisService, DiagramMapper diagramMapper, UserRepository userRepository,  SeatMapper seatMapper) {
         this.roomRepository = roomRepository;
         this.hallService = hallService;
         this.roomMapper = roomMapper;
@@ -54,15 +65,25 @@ public class RoomService {
         this.redisService = redisService;
         this.diagramMapper = diagramMapper;
         this.userRepository = userRepository;
+        this.seatMapper = seatMapper;
     }
 
-    public RoomDTO getRoomById(String roomId) {
+    public RoomDTO getViewRoom(String roomId,int pageNumber, int pageSize, String typeSeat, boolean isOccupied) {
         Room room = roomRepository.findById(roomId).orElseThrow(() -> new RuntimeException("Room not found"));
+        Pageable pageable =  PageRequest.of(pageNumber, pageSize);
+        Page<Seat> seats = seatRepository.findSeatsWithFilters(roomId, Seat.TypeSeat.valueOf(typeSeat), isOccupied, pageable);
+        Page<SeatDTO> seatDTOS = seats.map(seatMapper::toSeatDTO);
         RoomDTO roomDTO = roomMapper.toRoomDTO(room);
+                roomDTO.setSeats(seatDTOS.getContent());
                 roomDTO.setSeatAvailable(seatRepository.countSeatAvailableByRoomId(roomId));
                 roomDTO.setCapacity(room.getSeatList().size());
                 roomDTO.setUsersCount(userRepository.countUserRoomId(roomId));
         return roomDTO;
+    }
+
+    public RoomDTO getRoomById(String roomId) {
+        Room room = roomRepository.findById(roomId).orElseThrow(() -> new RuntimeException("Room not found"));
+        return roomMapper.toRoomDTO(room);
     }
 
     public Room getRoomByIdDefault(String roomId) {

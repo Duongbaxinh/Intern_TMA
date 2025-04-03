@@ -33,6 +33,7 @@ public interface SeatRepository extends JpaRepository<Seat,String> {
                 "(:roomId IS NULL OR s.room.id = :roomId)"
                 + "AND (:typeSeat IS NULL OR s.typeSeat = :typeSeat)"
     )
+
     Page<Seat> findSeatsWithFilters(@Param("roomId") String roomId,
                                     @Param("typeSeat") Seat.TypeSeat typeSeat,
                                     @Param("isOccupied") Boolean isOccupied,
