@@ -1,13 +1,11 @@
 package com.seatmanage.mappers;
 
-import com.seatmanage.dto.request.HallRequest;
-import com.seatmanage.dto.response.*;
+import com.seatmanage.dto.response.RoomDTO;
+import com.seatmanage.dto.response.SeatDTO;
 import com.seatmanage.entities.Hall;
 import com.seatmanage.entities.Room;
-import com.seatmanage.entities.User;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
-import org.mapstruct.Named;
 
 @Mapper(componentModel = "spring",uses = {SeatDTO.class, UserMapper.class, Hall.class})
 public interface RoomMapper {
@@ -19,5 +17,4 @@ public interface RoomMapper {
     @Mapping(target = "object",source = "object")
     RoomDTO toRoomDTO(Room room);
 
-    Room toHall(HallRequest hallRequest);
 }

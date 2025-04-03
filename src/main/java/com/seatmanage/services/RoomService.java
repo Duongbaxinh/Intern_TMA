@@ -12,6 +12,7 @@ import com.seatmanage.mappers.DiagramMapper;
 import com.seatmanage.mappers.RoomMapper;
 import com.seatmanage.repositories.RoomRepository;
 import com.seatmanage.repositories.SeatRepository;
+import com.seatmanage.repositories.UserRepository;
 import lombok.AccessLevel;
 import lombok.SneakyThrows;
 import lombok.experimental.FieldDefaults;
@@ -36,11 +37,12 @@ public class RoomService {
     private final ObjectMapper objectMapper;
     private final RedisService redisService;
     private final DiagramMapper diagramMapper;
+    private final UserRepository userRepository;
 
     public RoomService(RoomRepository roomRepository, HallService hallService, RoomMapper roomMapper,
                        UserService userService, SeatRepository seatRepository, WebSocketService webSocketService,
                        CloudinaryService cloudinaryService, CloudinaryService cloudinaryService1,
-                       ObjectMapper objectMapper, RedisService redisService, DiagramMapper diagramMapper) {
+                       ObjectMapper objectMapper, RedisService redisService, DiagramMapper diagramMapper, UserRepository userRepository) {
         this.roomRepository = roomRepository;
         this.hallService = hallService;
         this.roomMapper = roomMapper;
@@ -51,11 +53,16 @@ public class RoomService {
         this.objectMapper = objectMapper;
         this.redisService = redisService;
         this.diagramMapper = diagramMapper;
+        this.userRepository = userRepository;
     }
 
     public RoomDTO getRoomById(String roomId) {
         Room room = roomRepository.findById(roomId).orElseThrow(() -> new RuntimeException("Room not found"));
-        return roomMapper.toRoomDTO(room);
+        RoomDTO roomDTO = roomMapper.toRoomDTO(room);
+                roomDTO.setSeatAvailable(seatRepository.countSeatAvailableByRoomId(roomId));
+                roomDTO.setCapacity(room.getSeatList().size());
+                roomDTO.setUsersCount(userRepository.countUserRoomId(roomId));
+        return roomDTO;
     }
 
     public Room getRoomByIdDefault(String roomId) {
@@ -149,6 +156,9 @@ public class RoomService {
         }).orElse(room.image);
         DiagramDraft object = diagramMapper.toDiagramDraft(saveDiagram);
         object.setImage(url);
+        object.setName(saveDiagram.getName());
+        object.setHall(saveDiagram.getHall());
+        object.setFloor(saveDiagram.getFloor());
         object.setSeats(Arrays.asList(objectMapper.readValue(saveDiagram.seats, SeatDiagramUpdate[].class)));
         object.setDraft(true);
         redisService.setValue(saveDiagram.roomId, object);
@@ -160,14 +170,13 @@ public class RoomService {
     public String saveDiagram(SaveDiagram saveDiagram) {
         Room room = getRoomByIdDefault(saveDiagram.roomId);
         if(SecurityUtil.isSupperUser()){
-            System.out.println("run at here ::: superuser");
             String url = Optional.ofNullable(saveDiagram.getImage()).map(image -> {
                 try {
                     return cloudinaryService.uploadImage(image);
                 } catch (IOException e) {
                     return null;
                 }
-            }).orElse(null);
+            }).orElse(room.image);
             List<SeatDiagramUpdate> seatDiagramUpdates = Arrays.asList(objectMapper.readValue(saveDiagram.seats, SeatDiagramUpdate[].class));
 
             seatDiagramUpdates.forEach(seat -> {
@@ -177,7 +186,6 @@ public class RoomService {
                 seatRepository.save(seat1);
             });
 
-            System.out.println("save diagram and send message to room" + url);
             room.setImage(url);
             room.setObject(saveDiagram.object);
             roomRepository.save(room);
@@ -189,7 +197,7 @@ public class RoomService {
         }
     }
 
-        public void deleteDiagramDraft(String roomId) {
+    public void deleteDiagramDraft(String roomId) {
         redisService.deleteValueByKey(roomId);
     }
 

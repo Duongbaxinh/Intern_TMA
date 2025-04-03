@@ -23,5 +23,8 @@ public interface UserRepository extends JpaRepository<User,String> {
     @Query("select  user from User user where user.deleted = false  and user.username = :userName")
     Optional<User> findByUserName(String userName);
 
+    @Query("SELECT COUNT(u) FROM User u WHERE u.roomId = :roomId ")
+    int countUserRoomId(String roomId);
+
 
 }

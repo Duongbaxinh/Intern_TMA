@@ -74,11 +74,9 @@ public class SeatService {
 
 //      Check room existed
         Room room = roomService.getRoomByIdDefault(seatRequest.roomId);
-        System.out.println("run at here 1");
 //      Check user is chief
         boolean isPrivate = SecurityUtil.isPrivate(room.getChief() != null,room.getChief());
         if(!isPrivate) throw  new RuntimeException("Not permission to create seat of this room ! !!!");
-        System.out.println("run at here 2");
 //      Check Seat have in room ?
         seatRepository.findSeatByNamAndRoomId(seatRequest.name,room.getId())
                 .ifPresent(roomExisted -> {

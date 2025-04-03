@@ -117,6 +117,7 @@ public class RoomController {
                 .msg("save diagram successfully ")
                 .result(roomService.saveDiagram(saveDiagram)).build();
     }
+
     @GetMapping("/view/{roomId}")
     @PreAuthorize("hasAnyRole('ROLE_SUPERUSER','ROLE_LANDLORD','USER')")
     public ApiResponse<Object> getRoomView( @PathVariable String roomId) {
@@ -124,7 +125,5 @@ public class RoomController {
                 .msg("get room view successfully ")
                 .result(roomService.getRoomById(roomId)).build();
     }
-
-
 
 }

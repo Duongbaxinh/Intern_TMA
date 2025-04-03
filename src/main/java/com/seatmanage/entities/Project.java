@@ -4,8 +4,6 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.OnDelete;
-import org.hibernate.annotations.OnDeleteAction;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.security.Timestamp;
@@ -17,22 +15,18 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PUBLIC)
-public class Team {
+public class Project {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     String id;
     String name;
-    String code;
+    String description;
+    
     @CreationTimestamp
     @Column(updatable = false)
-    public LocalDateTime createdAt;
-
-    @OneToOne
-    @JoinColumn(name = "project", nullable = true,unique = true)
-    @OnDelete(action = OnDeleteAction.SET_NULL)
-    public Project project;
+    private LocalDateTime createdAt;
 
     @UpdateTimestamp
-    public LocalDateTime updatedAt;
+    private LocalDateTime updatedAt;
 
 }

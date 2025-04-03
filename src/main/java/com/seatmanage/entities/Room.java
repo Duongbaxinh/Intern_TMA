@@ -30,7 +30,8 @@ public class Room {
     String image;
     int capacity;
 
-    @Column(length = 3000)
+    @Lob
+    @Column(columnDefinition = "TEXT")
     String object;
     @ManyToOne
     @JoinColumn(name = "hallId")

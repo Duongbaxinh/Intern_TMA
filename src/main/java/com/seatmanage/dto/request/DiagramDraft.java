@@ -14,8 +14,9 @@ public class DiagramDraft {
     String name;
     String floor;
     String hall;
-    int availableSeat;
-    int totalSeat;
+    int seatAvailable;
+    int capacity;
+    int usersCount;
     boolean draft;
     String roomId;
     List<SeatDiagramUpdate> seats;

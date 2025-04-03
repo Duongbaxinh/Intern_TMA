@@ -2,16 +2,14 @@ package com.seatmanage.dto.response;
 
 
 import com.seatmanage.entities.User;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.util.List;
 
 @NoArgsConstructor
 @AllArgsConstructor
+@Data
 @Builder
 @FieldDefaults(level = AccessLevel.PUBLIC)
 public class RoomDTO {
@@ -23,6 +21,8 @@ public class RoomDTO {
     UserDTO chief;
     String object;
     String image;
+    int seatAvailable;
     int capacity;
+    int usersCount;
     List<SeatDTO> seats;
 }
